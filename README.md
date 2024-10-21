@@ -24,7 +24,32 @@ We welcome contributions from developers, healthcare professionals, and anyone p
 
 ## Setup
 
-(Instructions for setting up the development environment will be added as the project progresses)
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/emergency-med-portal.git
+   cd emergency-med-portal
+   ```
+
+2. Create a virtual environment and activate it:
+   ```
+   python -m venv venv
+   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+   ```
+
+3. Install the required packages:
+   ```
+   pip install -r requirements.txt
+   ```
+
+4. Run the API:
+   ```
+   python src/api/app.py
+   ```
+
+5. Run tests:
+   ```
+   python -m unittest discover tests
+   ```
 
 ## License
 
