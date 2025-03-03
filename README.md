@@ -57,5 +57,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-[Your contact information or preferred method of communication]
-# emergency-med-portal
+connect@roxonn.com
+# emergency-med-portal 
