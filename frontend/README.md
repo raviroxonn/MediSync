@@ -1,54 +1,172 @@
-# React + TypeScript + Vite
+# MediSync Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, responsive Progressive Web Application (PWA) for emergency medical response and hospital coordination.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Dashboard
+- Real-time emergency monitoring with interactive statistics
+- Live response time tracking and trend analysis
+- Staff availability and status monitoring
+- Hospital occupancy visualization
+- Emergency case management with severity indicators
+- Interactive charts for data visualization
+- System status monitoring with key metrics
 
-## Expanding the ESLint configuration
+### Hospital Management
+- Comprehensive hospital listing with multiple view options (Card, Table, Map)
+- Real-time bed availability tracking
+- Department and specialty filtering
+- Interactive map view with hospital locations
+- Detailed hospital information cards
+- Quick actions for emergency coordination
+- Advanced search and filtering capabilities
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Emergency Response
+- Active emergency case tracking
+- Severity-based prioritization
+- Real-time status updates
+- Staff assignment management
+- Response time monitoring
+- Location-based emergency routing
+- Incident reporting and documentation
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### Staff Management
+- Staff availability tracking
+- Role-based access control
+- Shift management
+- Expertise and specialty tracking
+- Real-time status updates
+- Performance metrics
+- Quick communication tools
+
+### Settings & Configuration
+- User preferences management
+- System configuration
+- Notification settings
+- Theme customization
+- Language preferences
+- Integration settings
+- Access control management
+
+## Technical Stack
+
+- **Framework**: React 18 with TypeScript
+- **UI Library**: Material-UI (MUI) v5
+- **State Management**: React Context API
+- **Routing**: React Router v6
+- **Data Visualization**: Chart.js with react-chartjs-2
+- **Maps**: Leaflet with react-leaflet
+- **PWA Support**: Vite PWA plugin
+- **Build Tool**: Vite
+- **Package Manager**: npm
+- **Code Quality**: ESLint, TypeScript
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v16 or higher)
+- npm (v7 or higher)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/MediSync.git
+   cd MediSync/frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Build for production:
+   ```bash
+   npm run build
+   ```
+
+### Development
+
+The project follows a modular architecture with the following structure:
+
+```
+frontend/
+├── src/
+│   ├── components/     # Reusable UI components
+│   ├── pages/         # Main application pages
+│   ├── routes/        # Routing configuration
+│   ├── styles/        # Global styles and themes
+│   ├── assets/        # Static assets
+│   └── utils/         # Utility functions
+├── public/            # Public assets
+└── vite.config.ts     # Vite configuration
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Progressive Web App Features
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Offline support with service workers
+- Installable on mobile devices
+- Push notifications
+- Background sync
+- Responsive design for all devices
+- App-like experience
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+## Performance Optimizations
+
+- Code splitting and lazy loading
+- Image optimization
+- Caching strategies
+- Minimized bundle size
+- Optimized assets
+- Performance monitoring
+
+## Security Features
+
+- HTTPS enforcement
+- Secure data transmission
+- Input validation
+- Authentication and authorization
+- Session management
+- API security
+- Data encryption
+
+## Accessibility
+
+- WCAG 2.1 compliance
+- Screen reader support
+- Keyboard navigation
+- Color contrast compliance
+- Focus management
+- Semantic HTML
+- ARIA attributes
+
+## Browser Support
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+- Mobile browsers
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+Project Link: [https://github.com/yourusername/MediSync](https://github.com/yourusername/MediSync)
