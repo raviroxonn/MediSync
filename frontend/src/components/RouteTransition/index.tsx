@@ -1,52 +1,56 @@
-import { useEffect, useState } from 'react';
-import { useLocation, useNavigation } from 'react-router-dom';
-import Box from '@mui/material/Box';
+import { ReactNode, Suspense } from 'react';
+import { motion } from 'framer-motion';
+import { Box } from '@mui/material';
 import LoadingIndicator from '../LoadingIndicator';
 
-export default function RouteTransition() {
-  const location = useLocation();
-  const navigation = useNavigation();
-  const [isLoading, setIsLoading] = useState(false);
+interface RouteTransitionProps {
+  children: ReactNode;
+}
 
-  useEffect(() => {
-    if (navigation.state === 'loading') {
-      setIsLoading(true);
-    } else {
-      // Add a small delay before hiding the loading indicator to prevent flashing
-      const timer = setTimeout(() => {
-        setIsLoading(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [navigation.state]);
+const pageVariants = {
+  initial: {
+    opacity: 0,
+    y: 20,
+  },
+  enter: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      ease: 'easeOut',
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -20,
+    transition: {
+      duration: 0.2,
+      ease: 'easeIn',
+    },
+  },
+};
 
-  // Also show loading indicator on location changes
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [location]);
-
-  if (!isLoading) return null;
-
+const RouteTransition = ({ children }: RouteTransitionProps) => {
   return (
-    <Box
-      sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: (theme) => theme.zIndex.drawer + 2,
-        backgroundColor: 'rgba(255, 255, 255, 0.7)',
-      }}
-    >
-      <LoadingIndicator />
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Suspense fallback={<LoadingIndicator />}>
+        <motion.div
+          initial="initial"
+          animate="enter"
+          exit="exit"
+          variants={pageVariants}
+          style={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+          }}
+        >
+          {children}
+        </motion.div>
+      </Suspense>
     </Box>
   );
-} 
+};
+
+export default RouteTransition; 

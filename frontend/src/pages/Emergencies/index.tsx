@@ -1,280 +1,271 @@
+import { useState } from 'react';
 import {
   Box,
-  Typography,
-  Card,
-  CardContent,
-  CardActions,
-  Button,
   Grid,
-  Chip,
-  LinearProgress,
+  Card,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   IconButton,
+  Tooltip,
+  Button,
   TextField,
   InputAdornment,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  useTheme,
+  alpha,
+  Stack,
+  LinearProgress,
 } from '@mui/material';
 import {
-  Search as SearchIcon,
-  Warning as WarningIcon,
-  LocalHospital as HospitalIcon,
-  DirectionsCar as AmbulanceIcon,
-  AccessTime as TimeIcon,
+  Search,
+  Warning as EmergencyIcon,
   Add as AddIcon,
-  LocationOn as LocationIcon,
+  DirectionsRun,
+  LocalHospital,
+  AccessTime,
+  LocationOn,
+  Phone,
+  Speed,
 } from '@mui/icons-material';
-import { useState } from 'react';
+import { motion } from 'framer-motion';
+import StatusBadge from '../../components/common/StatusBadge';
+import StatCard from '../../components/common/StatCard';
 
 interface Emergency {
   id: number;
   type: string;
   location: string;
-  status: 'critical' | 'stable' | 'en-route';
-  timeReported: string;
-  assignedHospital?: string;
-  assignedAmbulance?: string;
-  description: string;
-  eta?: string;
-  severity: 'High' | 'Medium' | 'Low';
-  progress: number;
+  status: 'critical' | 'stable' | 'moderate' | 'pending';
+  patient: {
+    name: string;
+    age: number;
+    condition: string;
+  };
+  assignedTo: {
+    team: string;
+    contact: string;
+  };
+  hospital: {
+    name: string;
+    distance: string;
+    eta: string;
+  };
+  responseTime: string;
+  priority: number;
 }
 
-// Mock data - In a real app, this would come from an API
-const emergencies: Emergency[] = [
+const mockEmergencies: Emergency[] = [
   {
     id: 1,
-    type: 'Traffic Accident',
-    location: 'Interstate 95, Mile Marker 42',
+    type: 'Cardiac Arrest',
+    location: '123 Emergency St',
     status: 'critical',
-    timeReported: '10:30 AM',
-    assignedHospital: 'Central Hospital',
-    assignedAmbulance: 'Unit 7',
-    description: 'Multi-vehicle collision, multiple injuries reported',
-    eta: '5 mins',
-    severity: 'High',
-    progress: 75,
+    patient: {
+      name: 'John Doe',
+      age: 65,
+      condition: 'Critical',
+    },
+    assignedTo: {
+      team: 'Rapid Response Team A',
+      contact: '+1 (555) 123-4567',
+    },
+    hospital: {
+      name: 'Central Medical Center',
+      distance: '2.5 km',
+      eta: '8 mins',
+    },
+    responseTime: '2 mins ago',
+    priority: 1,
   },
-  {
-    id: 2,
-    type: 'Cardiac Emergency',
-    location: '234 Pine Street',
-    status: 'en-route',
-    timeReported: '10:45 AM',
-    assignedHospital: "St. Mary's Medical Center",
-    assignedAmbulance: 'Unit 3',
-    description: 'Possible heart attack, elderly patient',
-    eta: '8 mins',
-    severity: 'High',
-    progress: 45,
-  },
-  {
-    id: 3,
-    type: 'Workplace Injury',
-    location: 'Construction Site, 567 Main St',
-    status: 'stable',
-    timeReported: '11:15 AM',
-    assignedHospital: 'Community Health Center',
-    assignedAmbulance: 'Unit 5',
-    description: 'Fall from height, conscious but injured',
-    eta: '12 mins',
-    severity: 'Medium',
-    progress: 30,
-  },
+  // Add more mock emergencies
 ];
 
-export default function Emergencies() {
+const Emergencies = () => {
+  const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-
-  const filteredEmergencies = emergencies.filter((emergency) => {
-    const matchesSearch = emergency.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emergency.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || emergency.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const getStatusColor = (status: Emergency['status']) => {
-    switch (status) {
-      case 'critical':
-        return 'error';
-      case 'stable':
-        return 'success';
-      case 'en-route':
-        return 'warning';
-      default:
-        return 'default';
-    }
-  };
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Emergency Cases
-        </Typography>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4">Emergency Response Center</Typography>
         <Button
           variant="contained"
-          color="primary"
           startIcon={<AddIcon />}
+          sx={{
+            borderRadius: 2,
+            textTransform: 'none',
+          }}
         >
           New Emergency
         </Button>
       </Box>
 
-      {/* Filters */}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={8}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Search emergencies..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
+      <Grid container spacing={3}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Active Emergencies"
+            value={12}
+            icon={<EmergencyIcon />}
+            color="error"
+            trend={{ value: 20, isPositive: false }}
           />
         </Grid>
-        <Grid item xs={12} md={4}>
-          <FormControl fullWidth variant="outlined">
-            <InputLabel>Status Filter</InputLabel>
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              label="Status Filter"
-            >
-              <MenuItem value="all">All Status</MenuItem>
-              <MenuItem value="critical">Critical</MenuItem>
-              <MenuItem value="stable">Stable</MenuItem>
-              <MenuItem value="en-route">En Route</MenuItem>
-            </Select>
-          </FormControl>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Available Teams"
+            value={8}
+            icon={<DirectionsRun />}
+            color="success"
+            trend={{ value: 5, isPositive: true }}
+          />
         </Grid>
-      </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Avg. Response Time"
+            value="4.5 min"
+            icon={<AccessTime />}
+            color="warning"
+            trend={{ value: 12, isPositive: true }}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Success Rate"
+            value="94%"
+            icon={<Speed />}
+            color="info"
+            trend={{ value: 3, isPositive: true }}
+          />
+        </Grid>
 
-      {/* Emergency Cards */}
-      <Grid container spacing={3}>
-        {filteredEmergencies.map((emergency) => (
-          <Grid item xs={12} md={6} lg={4} key={emergency.id}>
-            <Card
-              sx={{
-                position: 'relative',
-                overflow: 'visible',
-              }}
-            >
-              {emergency.status === 'critical' && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: -12,
-                    right: 16,
-                    backgroundColor: 'error.main',
-                    color: 'white',
-                    borderRadius: '50%',
-                    width: 24,
-                    height: 24,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    animation: 'pulse 2s infinite',
-                    '@keyframes pulse': {
-                      '0%': {
-                        boxShadow: '0 0 0 0 rgba(255, 0, 0, 0.4)',
-                      },
-                      '70%': {
-                        boxShadow: '0 0 0 10px rgba(255, 0, 0, 0)',
-                      },
-                      '100%': {
-                        boxShadow: '0 0 0 0 rgba(255, 0, 0, 0)',
-                      },
-                    },
-                  }}
-                >
-                  <WarningIcon fontSize="small" />
-                </Box>
-              )}
-              <CardContent>
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="h6" gutterBottom>
-                    {emergency.type}
-                  </Typography>
-                  <Chip
-                    label={emergency.status.toUpperCase()}
-                    color={getStatusColor(emergency.status)}
-                    size="small"
-                    sx={{ mr: 1 }}
-                  />
-                  <Chip
-                    label={emergency.severity}
-                    color={emergency.severity === 'High' ? 'error' : emergency.severity === 'Medium' ? 'warning' : 'success'}
-                    size="small"
-                  />
-                </Box>
+        <Grid item xs={12}>
+          <Card
+            component={motion.div}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            sx={{ p: 3 }}
+          >
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                fullWidth
+                placeholder="Search emergencies..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <LocationIcon color="action" fontSize="small" />
-                  <Typography variant="body2" color="text.secondary">
-                    {emergency.location}
-                  </Typography>
-                </Box>
-
-                <Typography color="text.secondary" paragraph>
-                  {emergency.description}
-                </Typography>
-
-                <Box sx={{ mb: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <TimeIcon fontSize="small" color="action" />
-                    <Typography variant="body2">
-                      Reported: {emergency.timeReported}
-                      {emergency.eta && ` (ETA: ${emergency.eta})`}
-                    </Typography>
-                  </Box>
-
-                  {emergency.assignedHospital && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <HospitalIcon fontSize="small" color="primary" />
-                      <Typography variant="body2">{emergency.assignedHospital}</Typography>
-                    </Box>
-                  )}
-
-                  {emergency.assignedAmbulance && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <AmbulanceIcon fontSize="small" color="primary" />
-                      <Typography variant="body2">{emergency.assignedAmbulance}</Typography>
-                    </Box>
-                  )}
-                </Box>
-
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Progress
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={emergency.progress}
-                    color={getStatusColor(emergency.status)}
-                  />
-                </Box>
-              </CardContent>
-              <CardActions>
-                <Button size="small" color="primary">
-                  Update Status
-                </Button>
-                <Button size="small" color="primary">
-                  View Details
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Emergency Details</TableCell>
+                    <TableCell>Patient Info</TableCell>
+                    <TableCell>Assigned Team</TableCell>
+                    <TableCell>Hospital</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Priority</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {mockEmergencies.map((emergency) => (
+                    <TableRow
+                      key={emergency.id}
+                      component={motion.tr}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      whileHover={{ backgroundColor: alpha(theme.palette.primary.main, 0.05) }}
+                    >
+                      <TableCell>
+                        <Stack spacing={1}>
+                          <Typography variant="subtitle2" color="primary">
+                            {emergency.type}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                            <LocationOn sx={{ fontSize: 16, mr: 0.5 }} />
+                            <Typography variant="body2">{emergency.location}</Typography>
+                          </Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Reported {emergency.responseTime}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          <Typography variant="body2">{emergency.patient.name}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Age: {emergency.patient.age}
+                          </Typography>
+                          <Typography variant="body2" color="error">
+                            {emergency.patient.condition}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          <Typography variant="body2">{emergency.assignedTo.team}</Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                            <Phone sx={{ fontSize: 16, mr: 0.5 }} />
+                            <Typography variant="body2">{emergency.assignedTo.contact}</Typography>
+                          </Box>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <LocalHospital sx={{ fontSize: 16, mr: 0.5, color: theme.palette.primary.main }} />
+                            <Typography variant="body2">{emergency.hospital.name}</Typography>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary">
+                            Distance: {emergency.hospital.distance}
+                          </Typography>
+                          <Typography variant="body2" color="warning.main">
+                            ETA: {emergency.hospital.eta}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={emergency.status} />
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ width: 100 }}>
+                          <LinearProgress
+                            variant="determinate"
+                            value={((4 - emergency.priority) / 3) * 100}
+                            color={
+                              emergency.priority === 1
+                                ? 'error'
+                                : emergency.priority === 2
+                                ? 'warning'
+                                : 'success'
+                            }
+                            sx={{
+                              height: 8,
+                              borderRadius: 4,
+                            }}
+                          />
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Card>
+        </Grid>
       </Grid>
     </Box>
   );
-} 
+};
+
+export default Emergencies; 

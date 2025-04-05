@@ -20,6 +20,16 @@ import {
   Badge,
   Tooltip,
   CircularProgress,
+  Menu,
+  MenuItem,
+  Tab,
+  Tabs,
+  useTheme,
+  alpha,
+  SpeedDial,
+  SpeedDialIcon,
+  SpeedDialAction,
+  AvatarGroup,
 } from '@mui/material';
 import {
   LocalHospital as HospitalIcon,
@@ -34,9 +44,21 @@ import {
   ArrowUpward as ArrowUpIcon,
   ArrowDownward as ArrowDownIcon,
   Refresh as RefreshIcon,
+  LocationOn as LocationIcon,
+  LocalShipping as TransferIcon,
+  Speed as SpeedIcon,
+  Assessment as AssessmentIcon,
+  Bed as BedIcon,
+  LocalHotel as BedsIcon,
+  MedicalServices as MedicalIcon,
+  LocalPharmacy as PharmacyIcon,
+  Timeline as TimelineIcon,
+  Add as AddIcon,
+  Settings as SettingsIcon,
+  DirectionsRun,
 } from '@mui/icons-material';
-import { useState, useEffect } from 'react';
-import { Line, Bar } from 'react-chartjs-2';
+import { useState, useEffect, useCallback, useTransition, Suspense } from 'react';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -44,11 +66,15 @@ import {
   PointElement,
   LineElement,
   BarElement,
+  ArcElement,
   Title,
   Tooltip as ChartTooltip,
   Legend,
   Filler,
 } from 'chart.js';
+import { motion, AnimatePresence } from 'framer-motion';
+import StatCard from '../../components/common/StatCard';
+import StatusBadge from '../../components/common/StatusBadge';
 
 // Register ChartJS components
 ChartJS.register(
@@ -57,6 +83,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
+  ArcElement,
   Title,
   ChartTooltip,
   Legend,
@@ -86,446 +113,520 @@ const styles = {
     height: '100%',
     minHeight: 400,
   },
+  resourceCard: {
+    p: 2,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+    mb: 2,
+  },
 };
 
-interface EmergencyCase {
-  id: number;
-  title: string;
+interface EmergencyAlert {
+  id: string;
+  type: string;
   location: string;
-  severity: 'high' | 'medium' | 'low';
-  time: string;
-  status: 'active' | 'resolved';
-  assignedTo: string;
+  timestamp: string;
+  severity: 'critical' | 'moderate' | 'stable';
+  status: string;
 }
 
-interface StaffMember {
-  id: number;
+interface TeamMember {
+  id: string;
   name: string;
   role: string;
-  status: 'active' | 'break' | 'off';
+  status: 'active' | 'standby' | 'offline';
   avatar: string;
 }
 
-const mockEmergencies: EmergencyCase[] = [
+const mockAlerts: EmergencyAlert[] = [
   {
-    id: 1,
-    title: 'Traffic Accident',
+    id: '1',
+    type: 'Cardiac Emergency',
+    location: 'Central Hospital, Floor 3',
+    timestamp: '2 mins ago',
+    severity: 'critical',
+    status: 'Active Response',
+  },
+  {
+    id: '2',
+    type: 'Traffic Accident',
     location: 'Main St & 5th Ave',
-    severity: 'high',
-    time: '10 min ago',
-    status: 'active',
-    assignedTo: 'Dr. Smith',
+    timestamp: '5 mins ago',
+    severity: 'moderate',
+    status: 'En Route',
   },
   {
-    id: 2,
-    title: 'Cardiac Emergency',
-    location: 'Central Hospital',
-    severity: 'high',
-    time: '15 min ago',
-    status: 'active',
-    assignedTo: 'Dr. Johnson',
-  },
-  {
-    id: 3,
-    title: 'Sports Injury',
-    location: 'City Stadium',
-    severity: 'medium',
-    time: '30 min ago',
-    status: 'resolved',
-    assignedTo: 'Dr. Williams',
+    id: '3',
+    type: 'Medical Emergency',
+    location: 'Downtown Clinic',
+    timestamp: '10 mins ago',
+    severity: 'stable',
+    status: 'Resolved',
   },
 ];
 
-const mockStaff: StaffMember[] = [
+const mockTeamMembers: TeamMember[] = [
   {
-    id: 1,
-    name: 'Dr. Sarah Smith',
+    id: '1',
+    name: 'Dr. Sarah Johnson',
     role: 'Emergency Physician',
     status: 'active',
-    avatar: 'S',
+    avatar: '/avatars/1.jpg',
   },
   {
-    id: 2,
-    name: 'Dr. John Johnson',
-    role: 'Trauma Surgeon',
+    id: '2',
+    name: 'James Wilson',
+    role: 'Paramedic',
     status: 'active',
-    avatar: 'J',
+    avatar: '/avatars/2.jpg',
   },
   {
-    id: 3,
-    name: 'Dr. Emily Williams',
-    role: 'Cardiologist',
-    status: 'break',
-    avatar: 'E',
+    id: '3',
+    name: 'Emma Thompson',
+    role: 'Emergency Nurse',
+    status: 'standby',
+    avatar: '/avatars/3.jpg',
   },
 ];
 
-export default function Dashboard() {
+const Dashboard = () => {
+  const theme = useTheme();
+  const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState({
-    activeEmergencies: 5,
-    availableHospitals: 12,
-    activeStaff: 45,
-    averageResponseTime: 8,
-    totalPatients: 128,
-    occupancyRate: 75,
+    activeEmergencies: 12,
+    availableTeams: 8,
+    avgResponseTime: 4.5,
+    successRate: 94,
+    totalPatients: 156,
+    criticalCases: 23,
   });
 
-  const handleRefresh = async () => {
+  const [timeRange, setTimeRange] = useState('24h');
+
+  const handleRefresh = useCallback(async () => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setStats(prev => ({
-      ...prev,
-      activeEmergencies: prev.activeEmergencies + Math.floor(Math.random() * 3) - 1,
-      activeStaff: prev.activeStaff + Math.floor(Math.random() * 5) - 2,
-      averageResponseTime: Math.max(5, prev.averageResponseTime + Math.floor(Math.random() * 2) - 1),
-    }));
-    setIsLoading(false);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      startTransition(() => {
+        setStats(prev => ({
+          ...prev,
+          activeEmergencies: prev.activeEmergencies + Math.floor(Math.random() * 3) - 1,
+          availableTeams: prev.availableTeams + Math.floor(Math.random() * 2) - 1,
+          avgResponseTime: Number((prev.avgResponseTime + (Math.random() * 0.4 - 0.2)).toFixed(1)),
+          successRate: Math.min(100, Math.max(0, prev.successRate + Math.floor(Math.random() * 3) - 1)),
+          totalPatients: prev.totalPatients + Math.floor(Math.random() * 5),
+          criticalCases: Math.max(0, prev.criticalCases + Math.floor(Math.random() * 3) - 1),
+        }));
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [startTransition]);
+
+  const handleTimeRangeChange = (range: string) => {
+    startTransition(() => {
+      setTimeRange(range);
+    });
   };
 
   useEffect(() => {
     const interval = setInterval(handleRefresh, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [handleRefresh]);
 
-  // Chart data
   const responseTimeData = {
-    labels: ['6:00', '8:00', '10:00', '12:00', '14:00', '16:00', '18:00'],
+    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
     datasets: [
       {
-        label: 'Response Time (minutes)',
-        data: [9, 7, 8, 6, 8, 7, 6],
+        label: 'Response Time (mins)',
+        data: [5.2, 4.8, 6.1, 4.3, 5.9, 4.5],
+        borderColor: theme.palette.primary.main,
+        backgroundColor: alpha(theme.palette.primary.main, 0.1),
         fill: true,
-        borderColor: 'rgba(75, 192, 192, 1)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
         tension: 0.4,
       },
     ],
   };
 
-  const emergencyCaseData = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+  const emergencyTypeData = {
+    labels: ['Cardiac', 'Trauma', 'Respiratory', 'Neurological', 'Other'],
     datasets: [
       {
-        label: 'Emergency Cases',
-        data: [12, 19, 15, 17, 14, 15, 18],
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-        borderWidth: 1,
+        data: [30, 25, 20, 15, 10],
+        backgroundColor: [
+          theme.palette.error.main,
+          theme.palette.warning.main,
+          theme.palette.info.main,
+          theme.palette.success.main,
+          theme.palette.grey[500],
+        ],
+        borderWidth: 0,
       },
     ],
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold">
+    <Box
+      component={motion.div}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      sx={{
+        p: 3,
+        minHeight: '100vh',
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, ${alpha(theme.palette.background.default, 0.95)} 100%)`,
+      }}
+    >
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" fontWeight="bold" color="primary">
           Emergency Response Dashboard
         </Typography>
-        <Tooltip title="Refresh data">
-          <IconButton onClick={handleRefresh} disabled={isLoading}>
-            {isLoading ? <CircularProgress size={24} /> : <RefreshIcon />}
-          </IconButton>
-        </Tooltip>
-      </Box>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Badge badgeContent={3} color="error">
+            <IconButton color="primary">
+              <NotificationsIcon />
+            </IconButton>
+          </Badge>
+          <Tooltip title="Refresh Data">
+            <IconButton 
+              onClick={handleRefresh} 
+              color="primary"
+              disabled={isLoading || isPending}
+            >
+              {(isLoading || isPending) ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                <RefreshIcon />
+              )}
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      </Stack>
 
-      {/* Quick Stats */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {[
-          {
-            title: 'Active Emergencies',
-            value: stats.activeEmergencies,
-            icon: <EmergencyIcon />,
-            color: 'error.main',
-            trend: '+12%',
-            trendUp: true,
-          },
-          {
-            title: 'Available Hospitals',
-            value: stats.availableHospitals,
-            icon: <HospitalIcon />,
-            color: 'primary.main',
-            trend: 'stable',
-          },
-          {
-            title: 'Active Staff',
-            value: stats.activeStaff,
-            icon: <StaffIcon />,
-            color: 'success.main',
-            trend: '-5%',
-            trendUp: false,
-          },
-          {
-            title: 'Avg. Response Time',
-            value: `${stats.averageResponseTime}m`,
-            icon: <TimeIcon />,
-            color: 'warning.main',
-            trend: '-2%',
-            trendUp: false,
-          },
-        ].map((stat, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card sx={styles.statsCard}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Avatar sx={{ bgcolor: stat.color, mr: 2 }}>
-                    {stat.icon}
-                  </Avatar>
-                  <Box>
-                    <Typography color="textSecondary" variant="overline">
-                      {stat.title}
-                    </Typography>
-                    <Typography variant="h4" fontWeight="bold">
-                      {stat.value}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  {stat.trend === 'stable' ? (
-                    <Chip 
-                      label="Stable" 
-                      size="small" 
-                      color="default"
-                      sx={{ fontSize: '0.75rem' }}
-                    />
-                  ) : (
-                    <Chip
-                      icon={stat.trendUp ? <ArrowUpIcon /> : <ArrowDownIcon />}
-                      label={stat.trend}
+      <Grid container spacing={3}>
+        <Suspense fallback={
+          <Box sx={{ width: '100%', mt: 2 }}>
+            <LinearProgress />
+          </Box>
+        }>
+          {/* Stats Cards */}
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              title="Active Emergencies"
+              value={stats.activeEmergencies}
+              icon={<EmergencyIcon />}
+              color="error"
+              trend={{ value: 8, isPositive: false }}
+              loading={isPending}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              title="Available Teams"
+              value={stats.availableTeams}
+              icon={<DirectionsRun />}
+              color="success"
+              trend={{ value: 2, isPositive: true }}
+              loading={isPending}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              title="Avg. Response Time"
+              value={`${stats.avgResponseTime}m`}
+              icon={<TimeIcon />}
+              color="warning"
+              trend={{ value: 12, isPositive: true }}
+              loading={isPending}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatCard
+              title="Success Rate"
+              value={`${stats.successRate}%`}
+              icon={<CheckCircleIcon />}
+              color="info"
+              trend={{ value: 5, isPositive: true }}
+              loading={isPending}
+            />
+          </Grid>
+
+          {/* Main Content */}
+          <Grid item xs={12} md={8}>
+            <Card
+              component={motion.div}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              sx={{
+                p: 3,
+                height: '100%',
+                background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.95)} 0%, ${alpha(theme.palette.background.paper, 0.9)} 100%)`,
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+              }}
+            >
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+                <Typography variant="h6">Response Time Trends</Typography>
+                <Stack direction="row" spacing={1}>
+                  {['24h', '7d', '30d'].map((range) => (
+                    <Button
+                      key={range}
                       size="small"
-                      color={stat.trendUp ? 'success' : 'error'}
-                      sx={{ fontSize: '0.75rem' }}
-                    />
-                  )}
-                </Box>
-              </CardContent>
+                      variant={timeRange === range ? 'contained' : 'outlined'}
+                      onClick={() => handleTimeRangeChange(range)}
+                      disabled={isPending}
+                    >
+                      {range}
+                    </Button>
+                  ))}
+                </Stack>
+              </Stack>
+              <Box sx={{ height: 300, position: 'relative' }}>
+                {isPending && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'rgba(255, 255, 255, 0.7)',
+                      zIndex: 1,
+                    }}
+                  >
+                    <CircularProgress />
+                  </Box>
+                )}
+                <Line
+                  data={responseTimeData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        display: false,
+                      },
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        grid: {
+                          display: true,
+                          color: alpha(theme.palette.divider, 0.1),
+                        },
+                      },
+                      x: {
+                        grid: {
+                          display: false,
+                        },
+                      },
+                    },
+                  }}
+                />
+              </Box>
             </Card>
           </Grid>
-        ))}
-      </Grid>
 
-      {/* Charts */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={styles.chart}>
-            <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-              Response Time Trend
-            </Typography>
-            <Line
-              data={responseTimeData}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: {
-                    display: false,
-                  },
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    grid: {
-                      display: false,
-                    },
-                  },
-                  x: {
-                    grid: {
-                      display: false,
-                    },
-                  },
-                },
+          {/* Emergency Types */}
+          <Grid item xs={12} md={4}>
+            <Card
+              sx={{
+                p: 3,
+                height: '100%',
+                background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.95)} 0%, ${alpha(theme.palette.background.paper, 0.9)} 100%)`,
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                position: 'relative',
               }}
-            />
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Paper sx={styles.chart}>
-            <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-              Emergency Cases by Day
-            </Typography>
-            <Bar
-              data={emergencyCaseData}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: {
-                    display: false,
-                  },
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    grid: {
-                      display: false,
-                    },
-                  },
-                  x: {
-                    grid: {
-                      display: false,
-                    },
-                  },
-                },
-              }}
-            />
-          </Paper>
-        </Grid>
-      </Grid>
-
-      {/* Active Emergencies and Staff Status */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6" fontWeight="bold">
-                Active Emergencies
-              </Typography>
-              <Badge badgeContent={mockEmergencies.filter(e => e.status === 'active').length} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </Box>
-            <List>
-              {mockEmergencies.map((emergency) => (
-                <ListItem
-                  key={emergency.id}
+            >
+              <Typography variant="h6" mb={3}>Emergency Distribution</Typography>
+              {isPending && (
+                <Box
                   sx={{
-                    mb: 2,
-                    bgcolor: 'background.paper',
-                    borderRadius: 1,
-                    boxShadow: 1,
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'rgba(255, 255, 255, 0.7)',
+                    zIndex: 1,
                   }}
                 >
-                  <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: emergency.severity === 'high' ? 'error.main' : 'warning.main' }}>
-                      <EmergencyIcon />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="subtitle1" fontWeight="bold">
-                          {emergency.title}
-                        </Typography>
-                        <Chip
-                          label={emergency.status}
-                          size="small"
-                          color={emergency.status === 'active' ? 'error' : 'success'}
-                        />
-                      </Box>
-                    }
-                    secondary={
-                      <>
-                        <Typography variant="body2" color="textSecondary">
-                          {emergency.location}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          Assigned to: {emergency.assignedTo}
-                        </Typography>
-                      </>
-                    }
-                  />
-                  <Typography variant="caption" color="textSecondary">
-                    {emergency.time}
-                  </Typography>
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-              Staff Status
-            </Typography>
-            <List>
-              {mockStaff.map((staff) => (
-                <ListItem
-                  key={staff.id}
-                  sx={{
-                    mb: 2,
-                    bgcolor: 'background.paper',
-                    borderRadius: 1,
-                    boxShadow: 1,
+                  <CircularProgress />
+                </Box>
+              )}
+              <Box sx={{ height: 300, display: 'flex', justifyContent: 'center' }}>
+                <Doughnut
+                  data={emergencyTypeData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                      },
+                    },
+                    cutout: '70%',
                   }}
-                >
-                  <ListItemAvatar>
-                    <Badge
-                      overlap="circular"
-                      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                      variant="dot"
-                      color={staff.status === 'active' ? 'success' : staff.status === 'break' ? 'warning' : 'error'}
+                />
+              </Box>
+            </Card>
+          </Grid>
+
+          {/* Recent Alerts */}
+          <Grid item xs={12} md={6}>
+            <Card
+              sx={{
+                p: 3,
+                height: '100%',
+                background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.95)} 0%, ${alpha(theme.palette.background.paper, 0.9)} 100%)`,
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+              }}
+            >
+              <Typography variant="h6" mb={2}>Recent Alerts</Typography>
+              <List>
+                <AnimatePresence>
+                  {mockAlerts.map((alert) => (
+                    <motion.div
+                      key={alert.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
                     >
-                      <Avatar>{staff.avatar}</Avatar>
-                    </Badge>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={
-                      <Typography variant="subtitle1" fontWeight="bold">
-                        {staff.name}
-                      </Typography>
-                    }
-                    secondary={staff.role}
-                  />
-                  <Chip
-                    label={staff.status}
-                    size="small"
-                    color={staff.status === 'active' ? 'success' : staff.status === 'break' ? 'warning' : 'error'}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
-      </Grid>
+                      <ListItem
+                        sx={{
+                          mb: 2,
+                          borderRadius: 2,
+                          bgcolor: alpha(theme.palette.primary.main, 0.05),
+                          opacity: isPending ? 0.7 : 1,
+                          transition: 'opacity 0.2s',
+                        }}
+                      >
+                        <ListItemAvatar>
+                          <Avatar
+                            sx={{
+                              bgcolor: alpha(
+                                theme.palette[alert.severity === 'critical' ? 'error' : alert.severity === 'moderate' ? 'warning' : 'success'].main,
+                                0.2
+                              ),
+                              color: theme.palette[alert.severity === 'critical' ? 'error' : alert.severity === 'moderate' ? 'warning' : 'success'].main,
+                            }}
+                          >
+                            <EmergencyIcon />
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Typography variant="body1" component="span">
+                              {alert.type}
+                            </Typography>
+                          }
+                          secondary={
+                            <Stack 
+                              direction="row" 
+                              alignItems="center" 
+                              spacing={1} 
+                              component="span"
+                            >
+                              <LocationIcon sx={{ fontSize: 14 }} />
+                              <Typography variant="body2" component="span">
+                                {alert.location}
+                              </Typography>
+                              <Typography variant="caption" component="span" color="text.secondary">
+                                • {alert.timestamp}
+                              </Typography>
+                            </Stack>
+                          }
+                        />
+                        <StatusBadge status={alert.severity} />
+                      </ListItem>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </List>
+            </Card>
+          </Grid>
 
-      {/* System Status */}
-      <Paper sx={{ p: 3, mt: 3 }}>
-        <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-          System Status
-        </Typography>
-        <Grid container spacing={3}>
+          {/* Active Teams */}
           <Grid item xs={12} md={6}>
-            <Box sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body1">Hospital Occupancy</Typography>
-                <Typography variant="body1" fontWeight="bold">{stats.occupancyRate}%</Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={stats.occupancyRate}
-                sx={{
-                  height: 8,
-                  borderRadius: 4,
-                  bgcolor: 'background.paper',
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: 4,
-                  },
-                }}
-              />
-            </Box>
+            <Card
+              sx={{
+                p: 3,
+                height: '100%',
+                background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.95)} 0%, ${alpha(theme.palette.background.paper, 0.9)} 100%)`,
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+              }}
+            >
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">Active Teams</Typography>
+                <AvatarGroup max={4}>
+                  {mockTeamMembers.map((member) => (
+                    <Tooltip key={member.id} title={`${member.name} - ${member.role}`}>
+                      <Avatar
+                        src={member.avatar}
+                        sx={{
+                          border: `2px solid ${theme.palette[member.status === 'active' ? 'success' : member.status === 'standby' ? 'warning' : 'error'].main}`,
+                          opacity: isPending ? 0.7 : 1,
+                          transition: 'opacity 0.2s',
+                        }}
+                      />
+                    </Tooltip>
+                  ))}
+                </AvatarGroup>
+              </Stack>
+              <List>
+                {mockTeamMembers.map((member) => (
+                  <ListItem
+                    key={member.id}
+                    sx={{
+                      mb: 2,
+                      borderRadius: 2,
+                      bgcolor: alpha(theme.palette.primary.main, 0.05),
+                      opacity: isPending ? 0.7 : 1,
+                      transition: 'opacity 0.2s',
+                    }}
+                  >
+                    <ListItemAvatar>
+                      <Avatar src={member.avatar} />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={
+                        <Typography variant="body1" component="span">
+                          {member.name}
+                        </Typography>
+                      }
+                      secondary={
+                        <Typography variant="body2" component="span" color="text.secondary">
+                          {member.role}
+                        </Typography>
+                      }
+                    />
+                    <Chip
+                      label={member.status}
+                      size="small"
+                      color={member.status === 'active' ? 'success' : member.status === 'standby' ? 'warning' : 'error'}
+                      sx={{ textTransform: 'capitalize' }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Card>
           </Grid>
-          <Grid item xs={12} md={6}>
-            <Box sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body1">Total Patients Today</Typography>
-                <Typography variant="body1" fontWeight="bold">{stats.totalPatients}</Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={(stats.totalPatients / 200) * 100}
-                color="secondary"
-                sx={{
-                  height: 8,
-                  borderRadius: 4,
-                  bgcolor: 'background.paper',
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: 4,
-                  },
-                }}
-              />
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
+        </Suspense>
+      </Grid>
     </Box>
   );
-} 
+};
+
+export default Dashboard; 

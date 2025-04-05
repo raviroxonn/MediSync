@@ -1,341 +1,362 @@
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import {
   Box,
+  Grid,
+  Card,
   Typography,
-  Paper,
+  IconButton,
+  useTheme,
+  alpha,
+  Stack,
+  Switch,
+  FormControlLabel,
   List,
   ListItem,
   ListItemText,
   ListItemIcon,
-  ListItemSecondaryAction,
-  Switch,
   Divider,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  TextField,
   Button,
-  Stack,
-  Grid,
-  Card,
-  CardContent,
+  TextField,
+  MenuItem,
   Alert,
+  Tabs,
+  Tab,
+  Chip,
 } from '@mui/material';
 import {
-  Notifications,
-  VolumeUp,
-  Brightness4,
-  Language,
-  Security,
-  Storage,
-  Sync,
-  CloudUpload,
-  Api,
+  Notifications as NotificationsIcon,
+  Security as SecurityIcon,
+  Language as LanguageIcon,
+  Palette as PaletteIcon,
+  VolumeUp as VolumeUpIcon,
+  Person as PersonIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
+  LocationOn as LocationIcon,
+  Save as SaveIcon,
+  DarkMode as DarkModeIcon,
+  LightMode as LightModeIcon,
   Settings as SettingsIcon,
-  LocationOn,
-  Speed,
-  Backup,
 } from '@mui/icons-material';
-import { useState } from 'react';
 
-interface Settings {
-  notifications: boolean;
-  sound: boolean;
-  darkMode: boolean;
-  language: string;
-  autoSync: boolean;
-  dataRetention: string;
-  emergencyAlerts: boolean;
-  locationTracking: boolean;
-  performanceMode: string;
-  backupFrequency: string;
-  apiEndpoint: string;
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
 }
 
-export default function Settings() {
-  const [settings, setSettings] = useState<Settings>({
-    notifications: true,
-    sound: true,
-    darkMode: false,
-    language: 'en',
-    autoSync: true,
-    dataRetention: '30',
-    emergencyAlerts: true,
-    locationTracking: true,
-    performanceMode: 'balanced',
-    backupFrequency: 'daily',
-    apiEndpoint: 'https://api.medisync.com/v1',
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`settings-tabpanel-${index}`}
+      aria-labelledby={`settings-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ py: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
+const Settings = () => {
+  const theme = useTheme();
+  const [activeTab, setActiveTab] = useState(0);
+  const [darkMode, setDarkMode] = useState(false);
+  const [notifications, setNotifications] = useState({
+    email: true,
+    push: true,
+    sms: false,
+  });
+  const [language, setLanguage] = useState('en');
+  const [volume, setVolume] = useState(80);
+  const [profile, setProfile] = useState({
+    name: 'Dr. John Smith',
+    email: 'john.smith@medisync.com',
+    phone: '+1 (555) 123-4567',
+    hospital: 'Central Medical Center',
+    role: 'Emergency Physician',
   });
 
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-
-  const handleToggle = (setting: keyof Settings) => {
-    setSettings((prev) => ({
-      ...prev,
-      [setting]: !prev[setting],
-    }));
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
   };
 
-  const handleChange = (setting: keyof Settings, value: string | boolean) => {
-    setSettings((prev) => ({
-      ...prev,
-      [setting]: value,
-    }));
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1
+    }
   };
 
-  const handleSave = () => {
-    setSaveStatus('saving');
-    // Simulate API call
-    setTimeout(() => {
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 3000);
-    }, 1000);
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
   };
 
-  const handleReset = () => {
-    // Implement reset logic
+  const handleSaveSettings = () => {
+    // Implement settings save logic
   };
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom sx={{ mb: 4 }}>
-        Settings
-      </Typography>
-
-      {saveStatus === 'saved' && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          Settings saved successfully!
-        </Alert>
-      )}
-
-      {saveStatus === 'error' && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          Error saving settings. Please try again.
-        </Alert>
-      )}
-
-      <Stack spacing={3}>
-        {/* Notifications and Alerts */}
-        <Paper>
-          <Typography variant="h6" sx={{ p: 2, pb: 0 }}>
-            Notifications & Alerts
+    <Box
+      sx={{
+        p: 3,
+        minHeight: '100vh',
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, ${alpha(theme.palette.background.default, 0.95)} 100%)`,
+      }}
+    >
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h4" fontWeight="bold" color="primary">
+            Settings
           </Typography>
-          <List>
-            <ListItem>
-              <ListItemIcon>
-                <Notifications />
-              </ListItemIcon>
-              <ListItemText
-                primary="Push Notifications"
-                secondary="Enable push notifications for emergencies"
-              />
-              <ListItemSecondaryAction>
-                <Switch
-                  edge="end"
-                  checked={settings.notifications}
-                  onChange={() => handleToggle('notifications')}
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-            <Divider />
-            <ListItem>
-              <ListItemIcon>
-                <VolumeUp />
-              </ListItemIcon>
-              <ListItemText
-                primary="Sound Alerts"
-                secondary="Play sound for critical notifications"
-              />
-              <ListItemSecondaryAction>
-                <Switch
-                  edge="end"
-                  checked={settings.sound}
-                  onChange={() => handleToggle('sound')}
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-            <Divider />
-            <ListItem>
-              <ListItemIcon>
-                <Security />
-              </ListItemIcon>
-              <ListItemText
-                primary="Emergency Alerts"
-                secondary="Receive high-priority emergency alerts"
-              />
-              <ListItemSecondaryAction>
-                <Switch
-                  edge="end"
-                  checked={settings.emergencyAlerts}
-                  onChange={() => handleToggle('emergencyAlerts')}
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-          </List>
-        </Paper>
-
-        {/* System Preferences */}
-        <Paper>
-          <Typography variant="h6" sx={{ p: 2, pb: 0 }}>
-            System Preferences
-          </Typography>
-          <Box sx={{ p: 2 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel id="language-label">Language</InputLabel>
-                  <Select
-                    labelId="language-label"
-                    value={settings.language}
-                    label="Language"
-                    onChange={(e) => handleChange('language', e.target.value)}
-                  >
-                    <MenuItem value="en">English</MenuItem>
-                    <MenuItem value="es">Spanish</MenuItem>
-                    <MenuItem value="fr">French</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel id="performance-label">Performance Mode</InputLabel>
-                  <Select
-                    labelId="performance-label"
-                    value={settings.performanceMode}
-                    label="Performance Mode"
-                    onChange={(e) => handleChange('performanceMode', e.target.value)}
-                  >
-                    <MenuItem value="high">High Performance</MenuItem>
-                    <MenuItem value="balanced">Balanced</MenuItem>
-                    <MenuItem value="battery">Battery Saver</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <TextField
-                    label="Data Retention (days)"
-                    type="number"
-                    value={settings.dataRetention}
-                    onChange={(e) => handleChange('dataRetention', e.target.value)}
-                    InputProps={{ inputProps: { min: 1, max: 365 } }}
-                  />
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel id="backup-label">Backup Frequency</InputLabel>
-                  <Select
-                    labelId="backup-label"
-                    value={settings.backupFrequency}
-                    label="Backup Frequency"
-                    onChange={(e) => handleChange('backupFrequency', e.target.value)}
-                  >
-                    <MenuItem value="hourly">Every Hour</MenuItem>
-                    <MenuItem value="daily">Daily</MenuItem>
-                    <MenuItem value="weekly">Weekly</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </Box>
-        </Paper>
-
-        {/* Advanced Settings */}
-        <Paper>
-          <Typography variant="h6" sx={{ p: 2, pb: 0 }}>
-            Advanced Settings
-          </Typography>
-          <List>
-            <ListItem>
-              <ListItemIcon>
-                <Brightness4 />
-              </ListItemIcon>
-              <ListItemText
-                primary="Dark Mode"
-                secondary="Use dark theme"
-              />
-              <ListItemSecondaryAction>
-                <Switch
-                  edge="end"
-                  checked={settings.darkMode}
-                  onChange={() => handleToggle('darkMode')}
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-            <Divider />
-            <ListItem>
-              <ListItemIcon>
-                <LocationOn />
-              </ListItemIcon>
-              <ListItemText
-                primary="Location Tracking"
-                secondary="Enable location tracking for emergency response"
-              />
-              <ListItemSecondaryAction>
-                <Switch
-                  edge="end"
-                  checked={settings.locationTracking}
-                  onChange={() => handleToggle('locationTracking')}
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-            <Divider />
-            <ListItem>
-              <ListItemIcon>
-                <Sync />
-              </ListItemIcon>
-              <ListItemText
-                primary="Auto-Sync"
-                secondary="Automatically sync data with central server"
-              />
-              <ListItemSecondaryAction>
-                <Switch
-                  edge="end"
-                  checked={settings.autoSync}
-                  onChange={() => handleToggle('autoSync')}
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-          </List>
-        </Paper>
-
-        {/* API Configuration */}
-        <Paper>
-          <Typography variant="h6" sx={{ p: 2, pb: 0 }}>
-            API Configuration
-          </Typography>
-          <Box sx={{ p: 2 }}>
-            <TextField
-              fullWidth
-              label="API Endpoint"
-              value={settings.apiEndpoint}
-              onChange={(e) => handleChange('apiEndpoint', e.target.value)}
-              variant="outlined"
-            />
-          </Box>
-        </Paper>
-
-        {/* Action Buttons */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          <Button
-            variant="outlined"
-            onClick={handleReset}
-            startIcon={<SettingsIcon />}
-          >
-            Reset to Defaults
-          </Button>
           <Button
             variant="contained"
-            color="primary"
-            onClick={handleSave}
-            disabled={saveStatus === 'saving'}
-            startIcon={<CloudUpload />}
+            startIcon={<SaveIcon />}
+            onClick={handleSaveSettings}
           >
-            {saveStatus === 'saving' ? 'Saving...' : 'Save Changes'}
+            Save Changes
           </Button>
-        </Box>
-      </Stack>
+        </Stack>
+
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={3}>
+            <motion.div variants={itemVariants}>
+              <Card sx={{ p: 2 }}>
+                <List>
+                  <ListItem button selected={activeTab === 0} onClick={() => setActiveTab(0)}>
+                    <ListItemIcon>
+                      <PersonIcon color={activeTab === 0 ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Profile" />
+                  </ListItem>
+                  <ListItem button selected={activeTab === 1} onClick={() => setActiveTab(1)}>
+                    <ListItemIcon>
+                      <NotificationsIcon color={activeTab === 1 ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Notifications" />
+                  </ListItem>
+                  <ListItem button selected={activeTab === 2} onClick={() => setActiveTab(2)}>
+                    <ListItemIcon>
+                      <SecurityIcon color={activeTab === 2 ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Security" />
+                  </ListItem>
+                  <ListItem button selected={activeTab === 3} onClick={() => setActiveTab(3)}>
+                    <ListItemIcon>
+                      <PaletteIcon color={activeTab === 3 ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText primary="Appearance" />
+                  </ListItem>
+                </List>
+              </Card>
+            </motion.div>
+          </Grid>
+
+          <Grid item xs={12} md={9}>
+            <motion.div variants={itemVariants}>
+              <Card sx={{ p: 3 }}>
+                <TabPanel value={activeTab} index={0}>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <Typography variant="h6" gutterBottom>Profile Information</Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Full Name"
+                        value={profile.name}
+                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Email"
+                        value={profile.email}
+                        onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Phone"
+                        value={profile.phone}
+                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Hospital"
+                        value={profile.hospital}
+                        onChange={(e) => setProfile({ ...profile, hospital: e.target.value })}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Role"
+                        value={profile.role}
+                        onChange={(e) => setProfile({ ...profile, role: e.target.value })}
+                      />
+                    </Grid>
+                  </Grid>
+                </TabPanel>
+
+                <TabPanel value={activeTab} index={1}>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <Typography variant="h6" gutterBottom>Notification Preferences</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <List>
+                        <ListItem>
+                          <ListItemIcon>
+                            <EmailIcon />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="Email Notifications"
+                            secondary="Receive updates and alerts via email"
+                          />
+                          <Switch
+                            checked={notifications.email}
+                            onChange={(e) => setNotifications({ ...notifications, email: e.target.checked })}
+                          />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemIcon>
+                            <NotificationsIcon />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="Push Notifications"
+                            secondary="Receive instant alerts on your device"
+                          />
+                          <Switch
+                            checked={notifications.push}
+                            onChange={(e) => setNotifications({ ...notifications, push: e.target.checked })}
+                          />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemIcon>
+                            <PhoneIcon />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="SMS Notifications"
+                            secondary="Receive text message alerts"
+                          />
+                          <Switch
+                            checked={notifications.sms}
+                            onChange={(e) => setNotifications({ ...notifications, sms: e.target.checked })}
+                          />
+                        </ListItem>
+                      </List>
+                    </Grid>
+                  </Grid>
+                </TabPanel>
+
+                <TabPanel value={activeTab} index={2}>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <Typography variant="h6" gutterBottom>Security Settings</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <List>
+                        <ListItem>
+                          <ListItemIcon>
+                            <SecurityIcon />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="Two-Factor Authentication"
+                            secondary="Add an extra layer of security to your account"
+                          />
+                          <Button variant="outlined" color="primary">
+                            Enable
+                          </Button>
+                        </ListItem>
+                        <Divider sx={{ my: 2 }} />
+                        <ListItem>
+                          <ListItemText
+                            primary="Password"
+                            secondary="Last changed 30 days ago"
+                          />
+                          <Button variant="outlined">
+                            Change Password
+                          </Button>
+                        </ListItem>
+                      </List>
+                    </Grid>
+                  </Grid>
+                </TabPanel>
+
+                <TabPanel value={activeTab} index={3}>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <Typography variant="h6" gutterBottom>Appearance Settings</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <List>
+                        <ListItem>
+                          <ListItemIcon>
+                            {darkMode ? <DarkModeIcon /> : <LightModeIcon />}
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="Dark Mode"
+                            secondary="Toggle between light and dark theme"
+                          />
+                          <Switch
+                            checked={darkMode}
+                            onChange={(e) => setDarkMode(e.target.checked)}
+                          />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemIcon>
+                            <LanguageIcon />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="Language"
+                            secondary="Choose your preferred language"
+                          />
+                          <TextField
+                            select
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value)}
+                            sx={{ minWidth: 150 }}
+                          >
+                            <MenuItem value="en">English</MenuItem>
+                            <MenuItem value="es">Spanish</MenuItem>
+                            <MenuItem value="fr">French</MenuItem>
+                          </TextField>
+                        </ListItem>
+                      </List>
+                    </Grid>
+                  </Grid>
+                </TabPanel>
+              </Card>
+            </motion.div>
+          </Grid>
+        </Grid>
+      </motion.div>
     </Box>
   );
-} 
+};
+
+export default Settings; 
