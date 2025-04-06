@@ -42,6 +42,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const drawerWidth = 240;
 
@@ -63,6 +64,7 @@ const Layout = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const { mode, toggleTheme } = useTheme();
   const { notifications, showNotification, requestPermission } = useNotification();
+  const { user, logout } = useAuth();
   const notificationCount = notifications.length;
 
   useEffect(() => {
@@ -109,6 +111,11 @@ const Layout = () => {
       'info',
       'Notification Center'
     );
+  };
+
+  const handleLogout = () => {
+    logout();
+    handleProfileMenuClose();
   };
 
   const drawerVariants = {
@@ -230,7 +237,7 @@ const Layout = () => {
                   background: `linear-gradient(45deg, ${muiTheme.palette.primary.main}, ${muiTheme.palette.secondary.main})`,
                 }}
               >
-                <AccountCircle />
+                {user?.firstName ? user.firstName[0] : <AccountCircle />}
               </Avatar>
             </IconButton>
           </Tooltip>
@@ -415,7 +422,7 @@ const Layout = () => {
           <ListItemIcon>
             <PersonAdd fontSize="small" />
           </ListItemIcon>
-          Profile
+          {user?.firstName ? `${user.firstName} ${user.lastName}` : 'Profile'}
         </MenuItem>
         <MenuItem onClick={handleProfileMenuClose}>
           <ListItemIcon>
@@ -424,7 +431,7 @@ const Layout = () => {
           Settings
         </MenuItem>
         <Divider sx={{ opacity: 0.1 }} />
-        <MenuItem onClick={handleProfileMenuClose}>
+        <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <LogoutIcon fontSize="small" />
           </ListItemIcon>
