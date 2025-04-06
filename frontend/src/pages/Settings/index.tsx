@@ -91,7 +91,16 @@ function TabPanel(props: TabPanelProps) {
 
 const Settings = () => {
   const theme = useTheme();
-  const { darkMode, setDarkMode } = useThemeContext();
+  const { 
+    darkMode, 
+    setDarkMode, 
+    isSystemTheme, 
+    toggleSystemTheme, 
+    reduceMotion, 
+    setReduceMotion,
+    accentColor,
+    setAccentColor
+  } = useThemeContext();
   const { user } = useAuth();
   const { showNotification } = useNotification();
   const [activeTab, setActiveTab] = useState(0);
@@ -122,9 +131,7 @@ const Settings = () => {
   const [fontSize, setFontSize] = useState('medium');
   const [fontFamily, setFontFamily] = useState('Inter');
   const [timeFormat, setTimeFormat] = useState('12h');
-  const [reduceMotion, setReduceMotion] = useState(false);
   const [animationSpeed, setAnimationSpeed] = useState(1);
-  const [accentColor, setAccentColor] = useState('#2196f3');
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -902,73 +909,88 @@ const Settings = () => {
                             flex: '1 1 0',
                             borderRadius: 2,
                             cursor: 'pointer',
-                            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                            position: 'relative',
+                            overflow: 'visible',
+                            border: isSystemTheme ? `2px solid ${theme.palette.primary.main}` : `1px solid ${alpha(theme.palette.divider, 0.1)}`,
                             transition: 'all 0.2s ease-in-out',
                             '&:hover': {
                               transform: 'translateY(-4px)',
-                              boxShadow: `0 8px 16px -4px ${alpha(theme.palette.common.black, 0.15)}`
+                              boxShadow: `0 8px 16px -4px ${alpha(theme.palette.common.black, 0.2)}`
                             }
                           }}
+                          onClick={() => toggleSystemTheme()}
                         >
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          {isSystemTheme && (
+                            <Chip 
+                              size="small" 
+                              color="primary" 
+                              label="Active" 
+                              sx={{ 
+                                position: 'absolute', 
+                                top: -10, 
+                                right: 10,
+                              }}
+                            />
+                          )}
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            mb: 2,
+                            color: isSystemTheme ? theme.palette.primary.main : 'inherit'
+                          }}>
                             <SettingsIcon sx={{ mr: 1 }} />
-                            <Typography variant="h6">System Default</Typography>
+                            <Typography variant="h6">System Theme</Typography>
                           </Box>
                           <Box sx={{
                             height: 100,
                             mb: 2,
                             borderRadius: 1,
-                            background: 'linear-gradient(to right, #f5f5f5 50%, #121212 50%)',
+                            background: 'linear-gradient(120deg, #ffffff 0%, #f5f5f5 100%)',
                             border: '1px solid #e0e0e0',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            overflow: 'hidden',
-                            position: 'relative'
                           }}>
                             <Box sx={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              width: '100%',
-                              height: '100%',
+                              width: '80%',
+                              height: '70%',
+                              borderRadius: 1,
                               display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
+                              flexDirection: 'column',
                             }}>
-                              <Typography 
-                                variant="body2"
-                                color="rgba(0,0,0,0.7)"
-                                sx={{ 
-                                  position: 'absolute',
-                                  left: '25%',
-                                  transform: 'translateX(-50%)',
-                                  fontWeight: 'bold'
-                                }}
-                              >
-                                Day
-                              </Typography>
-                              <Typography 
-                                variant="body2"
-                                color="rgba(255,255,255,0.9)"
-                                sx={{ 
-                                  position: 'absolute',
-                                  left: '75%',
-                                  transform: 'translateX(-50%)',
-                                  fontWeight: 'bold'
-                                }}
-                              >
-                                Night
-                              </Typography>
+                              <Box sx={{ 
+                                height: '20%', 
+                                bg: '#2196f3', 
+                                borderTopLeftRadius: 1,
+                                borderTopRightRadius: 1,
+                                mb: 1,
+                                backgroundColor: '#2196f3'
+                              }} />
+                              <Box sx={{ 
+                                display: 'flex', 
+                                flex: 1,
+                                gap: 1
+                              }}>
+                                <Box sx={{ width: '30%', backgroundColor: '#e0e0e0', borderRadius: 0.5 }} />
+                                <Box sx={{ 
+                                  width: '70%', 
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: 0.5
+                                }}>
+                                  <Box sx={{ height: '30%', backgroundColor: '#f0f0f0', borderRadius: 0.5 }} />
+                                  <Box sx={{ height: '30%', backgroundColor: '#f0f0f0', borderRadius: 0.5 }} />
+                                </Box>
+                              </Box>
                             </Box>
                           </Box>
                           <Typography variant="body2" color="text.secondary">
-                            Automatically follows your system's theme preference.
+                            Follow system theme settings.
                           </Typography>
                         </Card>
                       </Box>
                     </Grid>
-                    
+
                     {/* Color Accent */}
                     <Grid item xs={12} sx={{ mt: 2 }}>
                       <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
@@ -994,152 +1016,52 @@ const Settings = () => {
                         <Box 
                           sx={{ 
                             bgcolor: '#2196f3', 
-                            border: '2px solid #fff',
-                            boxShadow: '0 0 0 2px #2196f3'
-                          }} 
+                            border: accentColor === '#2196f3' ? '2px solid #fff' : 'none',
+                            boxShadow: accentColor === '#2196f3' ? '0 0 0 2px #2196f3' : 'none'
+                          }}
+                          onClick={() => setAccentColor('#2196f3')}
                         />
-                        <Box sx={{ bgcolor: '#f50057' }} />
-                        <Box sx={{ bgcolor: '#4caf50' }} />
-                        <Box sx={{ bgcolor: '#ff9800' }} />
-                        <Box sx={{ bgcolor: '#9c27b0' }} />
-                        <Box sx={{ bgcolor: '#607d8b' }} />
+                        <Box 
+                          sx={{ 
+                            bgcolor: '#f50057',
+                            border: accentColor === '#f50057' ? '2px solid #fff' : 'none',
+                            boxShadow: accentColor === '#f50057' ? '0 0 0 2px #f50057' : 'none'
+                          }}
+                          onClick={() => setAccentColor('#f50057')}
+                        />
+                        <Box 
+                          sx={{ 
+                            bgcolor: '#4caf50',
+                            border: accentColor === '#4caf50' ? '2px solid #fff' : 'none',
+                            boxShadow: accentColor === '#4caf50' ? '0 0 0 2px #4caf50' : 'none'
+                          }}
+                          onClick={() => setAccentColor('#4caf50')}
+                        />
+                        <Box 
+                          sx={{ 
+                            bgcolor: '#ff9800',
+                            border: accentColor === '#ff9800' ? '2px solid #fff' : 'none',
+                            boxShadow: accentColor === '#ff9800' ? '0 0 0 2px #ff9800' : 'none'
+                          }}
+                          onClick={() => setAccentColor('#ff9800')}
+                        />
+                        <Box 
+                          sx={{ 
+                            bgcolor: '#9c27b0',
+                            border: accentColor === '#9c27b0' ? '2px solid #fff' : 'none',
+                            boxShadow: accentColor === '#9c27b0' ? '0 0 0 2px #9c27b0' : 'none'
+                          }}
+                          onClick={() => setAccentColor('#9c27b0')}
+                        />
+                        <Box 
+                          sx={{ 
+                            bgcolor: '#607d8b',
+                            border: accentColor === '#607d8b' ? '2px solid #fff' : 'none',
+                            boxShadow: accentColor === '#607d8b' ? '0 0 0 2px #607d8b' : 'none'
+                          }}
+                          onClick={() => setAccentColor('#607d8b')}
+                        />
                       </Box>
-                    </Grid>
-                    
-                    {/* Animation Settings */}
-                    <Grid item xs={12} sx={{ mt: 2 }}>
-                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
-                        Animations & Motion
-                      </Typography>
-                      <Card sx={{ p: 2, borderRadius: 2 }}>
-                        <List disablePadding>
-                          <ListItem>
-                            <ListItemText
-                              primary="Reduce Motion"
-                              secondary="Minimize animations for improved performance and reduced motion sensitivity"
-                            />
-                            <Switch />
-                          </ListItem>
-                          <Divider sx={{ my: 1 }} />
-                          <ListItem>
-                            <ListItemText
-                              primary="Animation Speed"
-                              secondary="Adjust how fast animations play in the interface"
-                            />
-                            <Box sx={{ width: 180 }}>
-                              <Stack direction="row" spacing={1} alignItems="center">
-                                <Typography variant="body2">Slow</Typography>
-                                <Box sx={{ flexGrow: 1 }}>
-                                  {/* This would be a slider component */}
-                                  <Box 
-                                    sx={{ 
-                                      height: 4, 
-                                      bgcolor: alpha(theme.palette.primary.main, 0.2), 
-                                      borderRadius: 2,
-                                      position: 'relative',
-                                      '&::after': {
-                                        content: '""',
-                                        position: 'absolute',
-                                        height: 14,
-                                        width: 14,
-                                        top: '50%',
-                                        left: '60%',
-                                        transform: 'translate(-50%, -50%)',
-                                        bgcolor: theme.palette.primary.main,
-                                        borderRadius: '50%',
-                                      }
-                                    }} 
-                                  />
-                                </Box>
-                                <Typography variant="body2">Fast</Typography>
-                              </Stack>
-                            </Box>
-                          </ListItem>
-                        </List>
-                      </Card>
-                    </Grid>
-                    
-                    {/* Font Settings */}
-                    <Grid item xs={12} sx={{ mt: 2 }}>
-                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
-                        Typography
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
-                        <TextField
-                          select
-                          fullWidth
-                          label="Font Family"
-                          value={fontFamily}
-                          onChange={(e) => setFontFamily(e.target.value)}
-                          helperText="Select your preferred font for the interface"
-                        >
-                          <MenuItem value="Inter">Inter</MenuItem>
-                          <MenuItem value="Roboto">Roboto</MenuItem>
-                          <MenuItem value="Open Sans">Open Sans</MenuItem>
-                        </TextField>
-                        
-                        <TextField
-                          select
-                          fullWidth
-                          label="Font Size"
-                          value={fontSize}
-                          onChange={(e) => setFontSize(e.target.value)}
-                          helperText="Adjust the text size across the application"
-                        >
-                          <MenuItem value="small">Small</MenuItem>
-                          <MenuItem value="medium">Medium</MenuItem>
-                          <MenuItem value="large">Large</MenuItem>
-                        </TextField>
-                      </Box>
-                    </Grid>
-                    
-                    {/* Language Settings */}
-                    <Grid item xs={12} sx={{ mt: 2 }}>
-                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
-                        Language & Region
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
-                        <TextField
-                          select
-                          fullWidth
-                          label="Language"
-                          value={language}
-                          onChange={(e) => setLanguage(e.target.value)}
-                          helperText="Choose your preferred language"
-                        >
-                          <MenuItem value="en">English (United States)</MenuItem>
-                          <MenuItem value="en-gb">English (United Kingdom)</MenuItem>
-                          <MenuItem value="es">Español (Spanish)</MenuItem>
-                          <MenuItem value="fr">Français (French)</MenuItem>
-                          <MenuItem value="de">Deutsch (German)</MenuItem>
-                          <MenuItem value="zh">中文 (Chinese)</MenuItem>
-                          <MenuItem value="jp">日本語 (Japanese)</MenuItem>
-                        </TextField>
-                        
-                        <TextField
-                          select
-                          fullWidth
-                          label="Time Format"
-                          value={timeFormat}
-                          onChange={(e) => setTimeFormat(e.target.value)}
-                          helperText="Choose how time is displayed"
-                        >
-                          <MenuItem value="12h">12-hour (1:30 PM)</MenuItem>
-                          <MenuItem value="24h">24-hour (13:30)</MenuItem>
-                        </TextField>
-                      </Box>
-                    </Grid>
-                    
-                    <Grid item xs={12} sx={{ mt: 3 }}>
-                      <Button 
-                        variant="contained" 
-                        color="primary" 
-                        size="large"
-                        onClick={handleSaveSettings}
-                        startIcon={<SaveIcon />}
-                      >
-                        Save Appearance Settings
-                      </Button>
                     </Grid>
                   </Grid>
                 </TabPanel>
@@ -1152,4 +1074,4 @@ const Settings = () => {
   );
 };
 
-export default Settings; 
+export default Settings;
