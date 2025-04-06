@@ -377,4 +377,10 @@ const createCustomTheme = (mode: 'light' | 'dark') => {
   });
 };
 
-export default createCustomTheme; 
+// Export theme variants
+export const lightTheme = createCustomTheme('light');
+export const darkTheme = createCustomTheme('dark');
+
+// Default theme
+const theme = createCustomTheme('light');
+export default theme; 

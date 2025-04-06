@@ -21,5 +21,6 @@ export default defineConfig(({ mode }) => ({
       protocol: 'ws',
       host: 'localhost',
     },
+    historyApiFallback: true,
   },
 }))

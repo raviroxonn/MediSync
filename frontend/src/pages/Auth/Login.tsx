@@ -24,7 +24,7 @@ import { motion } from 'framer-motion';
 
 const Login: React.FC = () => {
   const theme = useTheme();
-  const { login, isLoading, error, clearError } = useAuth();
+  const { login, loading } = useAuth();
   
   // Form state
   const [email, setEmail] = useState('');
@@ -35,6 +35,7 @@ const Login: React.FC = () => {
   // Validation state
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   
   // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,7 +51,7 @@ const Login: React.FC = () => {
       setRememberMe(e.target.checked);
     }
     
-    if (error) clearError();
+    if (error) setError(null);
   };
   
   // Validate form
@@ -80,11 +81,19 @@ const Login: React.FC = () => {
     e.preventDefault();
     
     if (validateForm()) {
-      await login(email, password);
-      
-      // In a real app, you would handle "remember me" functionality here
-      // For now, we're using localStorage for all auth data
+      try {
+        await login(email, password);
+        // In a real app, you would handle "remember me" functionality here
+        // For now, we're using localStorage for all auth data
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      }
     }
+  };
+  
+  // Clear error
+  const clearError = () => {
+    setError(null);
   };
   
   // Toggle password visibility
@@ -222,21 +231,21 @@ const Login: React.FC = () => {
                 fullWidth
                 variant="contained"
                 size="large"
-                startIcon={isLoading ? undefined : <LoginIcon />}
+                startIcon={loading ? undefined : <LoginIcon />}
                 sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: 2 }}
-                disabled={isLoading}
+                disabled={loading}
               >
-                {isLoading ? <CircularProgress size={24} /> : 'Sign In'}
+                {loading ? <CircularProgress size={24} /> : 'Sign In'}
               </Button>
               
               <Grid container spacing={1}>
                 <Grid item xs={12} sm={6}>
-                  <Link component={RouterLink} to="/auth/forgot-password" variant="body2">
+                  <Link component={RouterLink} to="/forgot-password" variant="body2">
                     Forgot password?
                   </Link>
                 </Grid>
                 <Grid item xs={12} sm={6} sx={{ textAlign: { sm: 'right' } }}>
-                  <Link component={RouterLink} to="/auth/register" variant="body2">
+                  <Link component={RouterLink} to="/register" variant="body2">
                     {"Don't have an account? Sign Up"}
                   </Link>
                 </Grid>
@@ -248,29 +257,28 @@ const Login: React.FC = () => {
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                 Demo Accounts (Click to autofill)
               </Typography>
+              
               <Grid container spacing={1}>
-                {demoCredentials.map((cred, index) => (
-                  <Grid item xs={6} sm={4} key={index}>
+                {demoCredentials.map((cred) => (
+                  <Grid item xs={12} sm={6} key={cred.role}>
                     <Button
-                      variant="outlined"
                       size="small"
+                      variant="outlined"
                       fullWidth
-                      sx={{ 
-                        textTransform: 'none',
-                        borderRadius: 2,
-                        fontSize: '0.8rem',
-                        height: '100%',
-                      }}
                       onClick={() => fillDemoCredentials(cred.email, cred.password)}
+                      sx={{ 
+                        justifyContent: 'flex-start',
+                        textTransform: 'none',
+                        my: 0.5
+                      }}
                     >
-                      {cred.role}
+                      <Typography variant="body2" noWrap>
+                        {cred.role}: {cred.email}
+                      </Typography>
                     </Button>
                   </Grid>
                 ))}
               </Grid>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, textAlign: 'center' }}>
-                All demo accounts use password: "password"
-              </Typography>
             </Box>
           </Box>
         </Paper>

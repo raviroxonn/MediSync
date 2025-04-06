@@ -23,14 +23,77 @@ const mockLogin = async (email: string, password: string): Promise<AuthUser> => 
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  // Simple validation
-  if (email === 'user@example.com' && password === 'password') {
-    return {
-      id: '1',
-      name: 'John Doe',
+  // Demo user credentials
+  const validCredentials = [
+    {
       email: 'user@example.com',
-      role: 'doctor'
-    };
+      password: 'password',
+      userData: {
+        id: '1',
+        name: 'John Doe',
+        email: 'user@example.com',
+        role: 'doctor'
+      }
+    },
+    {
+      email: 'admin@medisync.com',
+      password: 'password',
+      userData: {
+        id: '2',
+        name: 'Admin User',
+        email: 'admin@medisync.com',
+        role: 'admin'
+      }
+    },
+    {
+      email: 'doctor@medisync.com',
+      password: 'password',
+      userData: {
+        id: '3',
+        name: 'Dr. Sarah Smith',
+        email: 'doctor@medisync.com',
+        role: 'doctor'
+      }
+    },
+    {
+      email: 'nurse@medisync.com',
+      password: 'password',
+      userData: {
+        id: '4',
+        name: 'Nina Brown',
+        email: 'nurse@medisync.com',
+        role: 'nurse'
+      }
+    },
+    {
+      email: 'paramedic@medisync.com',
+      password: 'password',
+      userData: {
+        id: '5',
+        name: 'Paul Miller',
+        email: 'paramedic@medisync.com',
+        role: 'paramedic'
+      }
+    },
+    {
+      email: 'dispatcher@medisync.com',
+      password: 'password',
+      userData: {
+        id: '6',
+        name: 'Diana Garcia',
+        email: 'dispatcher@medisync.com',
+        role: 'dispatcher'
+      }
+    }
+  ];
+  
+  // Find matching credentials
+  const foundUser = validCredentials.find(
+    user => user.email === email && user.password === password
+  );
+  
+  if (foundUser) {
+    return foundUser.userData;
   }
   
   throw new Error('Invalid credentials');
