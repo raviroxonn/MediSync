@@ -1,6 +1,6 @@
 import { createTheme, alpha } from '@mui/material/styles';
 
-const createCustomTheme = (mode: 'light' | 'dark') => {
+export const createCustomTheme = (mode: 'light' | 'dark') => {
   const isLight = mode === 'light';
 
   // Define common transition
@@ -377,10 +377,8 @@ const createCustomTheme = (mode: 'light' | 'dark') => {
   });
 };
 
-// Export theme variants
+// Maintain backward compatibility with existing code
 export const lightTheme = createCustomTheme('light');
 export const darkTheme = createCustomTheme('dark');
 
-// Default theme
-const theme = createCustomTheme('light');
-export default theme; 
+export default createCustomTheme; 

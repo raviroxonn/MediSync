@@ -1,12 +1,13 @@
-import { lazy, Suspense, useState, useEffect } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline, Box } from '@mui/material';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingIndicator from './components/common/LoadingIndicator';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { lightTheme, darkTheme } from './theme';
 
 // Lazy load components for better performance
@@ -52,21 +53,6 @@ function MainContent() {
 
   const AppTheme = createTheme(theme);
 
-  // Handle system preference changes for dark mode
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      setMode(e.matches ? 'dark' : 'light');
-    };
-
-    setMode(mediaQuery.matches ? 'dark' : 'light');
-    mediaQuery.addEventListener('change', handleChange);
-    
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
-
   // Custom suspense fallback with simpler animation
   const SuspenseFallback = () => (
     <Box 
@@ -91,7 +77,7 @@ function MainContent() {
   };
 
   return (
-    <ThemeProvider theme={AppTheme}>
+    <MuiThemeProvider theme={AppTheme}>
       <CssBaseline />
       <BrowserRouter>
         <AnimatePresence mode="wait" initial={false}>
@@ -202,18 +188,20 @@ function MainContent() {
           </Suspense>
         </AnimatePresence>
       </BrowserRouter>
-    </ThemeProvider>
+    </MuiThemeProvider>
   );
 }
 
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <NotificationProvider>
-          <MainContent />
-        </NotificationProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <MainContent />
+          </NotificationProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

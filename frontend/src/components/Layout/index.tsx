@@ -21,6 +21,8 @@ import {
   Badge,
   alpha,
   Tooltip,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -38,6 +40,7 @@ import {
   Logout as LogoutIcon,
   Person as PersonIcon,
   DirectionsRun,
+  BrightnessAuto,
 } from '@mui/icons-material';
 import { motion, AnimatePresence, Variants, useReducedMotion } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -144,7 +147,8 @@ const Layout = () => {
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const { mode, toggleTheme } = useTheme();
+  const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
+  const { mode, toggleTheme, isSystemTheme, toggleSystemTheme } = useTheme();
   const { notifications, showNotification, requestPermission } = useNotification();
   const { user, logout } = useAuth();
   const notificationCount = notifications.length;
@@ -212,6 +216,14 @@ const Layout = () => {
     handleProfileMenuClose();
   };
 
+  const handleSettingsMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setSettingsAnchorEl(event.currentTarget);
+  };
+
+  const handleSettingsMenuClose = () => {
+    setSettingsAnchorEl(null);
+  };
+
   // Simplified animations for reduced motion
   const getAnimationProps = () => {
     if (shouldReduceMotion) {
@@ -275,15 +287,15 @@ const Layout = () => {
             <MenuIcon />
           </IconButton>
           <Box sx={{ flexGrow: 1 }} />
-          <Tooltip title={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
+          <Tooltip title="Theme settings">
             <IconButton 
               component={motion.button}
               whileHover={shouldReduceMotion ? undefined : { scale: 1.1 }}
               whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
-              onClick={toggleTheme} 
+              onClick={handleSettingsMenuOpen}
               sx={{ mr: 2 }}
             >
-              {mode === 'dark' ? <LightMode /> : <DarkMode />}
+              {isSystemTheme ? <BrightnessAuto /> : mode === 'dark' ? <DarkMode /> : <LightMode />}
             </IconButton>
           </Tooltip>
           <Tooltip title="Notifications">
@@ -320,7 +332,7 @@ const Layout = () => {
                   background: `linear-gradient(45deg, ${muiTheme.palette.primary.main}, ${muiTheme.palette.secondary.main})`,
                 }}
               >
-                {user?.firstName ? user.firstName[0] : <AccountCircle />}
+                {user?.name ? user.name[0] : <AccountCircle />}
               </Avatar>
             </IconButton>
           </Tooltip>
@@ -565,7 +577,7 @@ const Layout = () => {
           <ListItemIcon>
             <PersonAdd fontSize="small" />
           </ListItemIcon>
-          {user?.firstName ? `${user.firstName} ${user.lastName}` : 'Profile'}
+          {user?.name || 'Profile'}
         </MenuItem>
         <MenuItem onClick={handleProfileMenuClose}>
           <ListItemIcon>
@@ -579,6 +591,72 @@ const Layout = () => {
             <LogoutIcon fontSize="small" />
           </ListItemIcon>
           Logout
+        </MenuItem>
+      </Menu>
+
+      <Menu
+        anchorEl={settingsAnchorEl}
+        open={Boolean(settingsAnchorEl)}
+        onClose={handleSettingsMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            mt: 1,
+            minWidth: 240,
+            overflow: 'visible',
+            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
+            backdropFilter: 'blur(10px)',
+            backgroundColor: alpha(muiTheme.palette.background.paper, 0.9),
+            border: `1px solid ${alpha(muiTheme.palette.divider, 0.1)}`,
+            borderRadius: 2,
+            '&:before': {
+              content: '""',
+              display: 'block',
+              position: 'absolute',
+              top: 0,
+              right: 14,
+              width: 10,
+              height: 10,
+              bgcolor: alpha(muiTheme.palette.background.paper, 0.9),
+              backdropFilter: 'blur(10px)',
+              transform: 'translateY(-50%) rotate(45deg)',
+              zIndex: 0,
+              borderTop: `1px solid ${alpha(muiTheme.palette.divider, 0.1)}`,
+              borderLeft: `1px solid ${alpha(muiTheme.palette.divider, 0.1)}`,
+            },
+          },
+        }}
+      >
+        <MenuItem sx={{ flexDirection: 'column', alignItems: 'flex-start', py: 2 }}>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+            Theme Settings
+          </Typography>
+          <FormControlLabel
+            control={
+              <Switch 
+                checked={isSystemTheme}
+                onChange={toggleSystemTheme}
+                color="primary"
+              />
+            }
+            label="Use system theme"
+            sx={{ mb: 1, width: '100%' }}
+          />
+          {!isSystemTheme && (
+            <FormControlLabel
+              control={
+                <Switch 
+                  checked={mode === 'dark'}
+                  onChange={toggleTheme}
+                  color="primary"
+                />
+              }
+              label="Dark mode"
+              sx={{ width: '100%' }}
+            />
+          )}
         </MenuItem>
       </Menu>
     </Box>
