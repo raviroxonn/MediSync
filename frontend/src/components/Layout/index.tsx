@@ -23,6 +23,7 @@ import {
   Tooltip,
   Switch,
   FormControlLabel,
+  Button,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -41,6 +42,11 @@ import {
   Person as PersonIcon,
   DirectionsRun,
   BrightnessAuto,
+  Brightness4,
+  Brightness7,
+  Computer,
+  NightsStay,
+  WbSunny,
 } from '@mui/icons-material';
 import { motion, AnimatePresence, Variants, useReducedMotion } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -148,7 +154,7 @@ const Layout = () => {
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
-  const { mode, toggleTheme, isSystemTheme, toggleSystemTheme } = useTheme();
+  const { mode, toggleTheme, isSystemTheme, toggleSystemTheme, setIsSystemTheme, setThemeMode } = useTheme();
   const { notifications, showNotification, requestPermission } = useNotification();
   const { user, logout } = useAuth();
   const notificationCount = notifications.length;
@@ -295,7 +301,41 @@ const Layout = () => {
               onClick={handleSettingsMenuOpen}
               sx={{ mr: 2 }}
             >
-              {isSystemTheme ? <BrightnessAuto /> : mode === 'dark' ? <DarkMode /> : <LightMode />}
+              {isSystemTheme ? 
+                <Computer sx={{ 
+                  fontSize: 24, 
+                  color: muiTheme.palette.primary.main 
+                }} /> : 
+                mode === 'dark' ? 
+                <NightsStay sx={{ 
+                  fontSize: 24, 
+                  color: alpha(muiTheme.palette.primary.light, 0.9) 
+                }} /> : 
+                <WbSunny sx={{ 
+                  fontSize: 24, 
+                  color: muiTheme.palette.warning.main 
+                }} />
+              }
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+            <IconButton 
+              component={motion.button}
+              whileHover={shouldReduceMotion ? undefined : { scale: 1.1 }}
+              whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
+              onClick={toggleTheme}
+              sx={{ mr: 2 }}
+            >
+              {mode === 'dark' ? 
+                <Brightness7 sx={{ 
+                  fontSize: 22, 
+                  color: muiTheme.palette.warning.light 
+                }} /> : 
+                <Brightness4 sx={{ 
+                  fontSize: 22, 
+                  color: alpha(muiTheme.palette.primary.light, 0.8) 
+                }} />
+              }
             </IconButton>
           </Tooltip>
           <Tooltip title="Notifications">
@@ -604,7 +644,7 @@ const Layout = () => {
           elevation: 0,
           sx: {
             mt: 1,
-            minWidth: 240,
+            minWidth: 260,
             overflow: 'visible',
             filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
             backdropFilter: 'blur(10px)',
@@ -630,9 +670,53 @@ const Layout = () => {
         }}
       >
         <MenuItem sx={{ flexDirection: 'column', alignItems: 'flex-start', py: 2 }}>
-          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-            Theme Settings
+          <Typography variant="subtitle1" color="primary" fontWeight="bold" sx={{ mb: 2 }}>
+            Theme Preferences
           </Typography>
+          
+          <Box sx={{ width: '100%', mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Choose theme mode:
+            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+              <Button 
+                variant={mode === 'light' && !isSystemTheme ? "contained" : "outlined"}
+                onClick={() => {
+                  setIsSystemTheme(false);
+                  setThemeMode('light');
+                }}
+                startIcon={<WbSunny />}
+                size="small"
+                sx={{ flex: 1, borderRadius: 2 }}
+              >
+                Light
+              </Button>
+              <Button 
+                variant={isSystemTheme ? "contained" : "outlined"}
+                onClick={() => toggleSystemTheme()}
+                startIcon={<Computer />}
+                size="small"
+                sx={{ flex: 1, borderRadius: 2 }}
+              >
+                System
+              </Button>
+              <Button 
+                variant={mode === 'dark' && !isSystemTheme ? "contained" : "outlined"}
+                onClick={() => {
+                  setIsSystemTheme(false);
+                  setThemeMode('dark');
+                }}
+                startIcon={<NightsStay />}
+                size="small"
+                sx={{ flex: 1, borderRadius: 2 }}
+              >
+                Dark
+              </Button>
+            </Box>
+          </Box>
+          
+          <Divider sx={{ width: '100%', my: 1, opacity: 0.1 }} />
+          
           <FormControlLabel
             control={
               <Switch 
@@ -641,7 +725,7 @@ const Layout = () => {
                 color="primary"
               />
             }
-            label="Use system theme"
+            label="Sync with system"
             sx={{ mb: 1, width: '100%' }}
           />
           {!isSystemTheme && (
