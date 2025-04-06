@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { routes } from './routes';
 import LoadingIndicator from './components/common/LoadingIndicator';
 
@@ -14,9 +15,11 @@ const router = createBrowserRouter(routes, {
 const App = () => {
   return (
     <ThemeProvider>
-      <Suspense fallback={<LoadingIndicator />}>
-        <RouterProvider router={router} fallbackElement={<LoadingIndicator />} />
-      </Suspense>
+      <NotificationProvider>
+        <Suspense fallback={<LoadingIndicator />}>
+          <RouterProvider router={router} fallbackElement={<LoadingIndicator />} />
+        </Suspense>
+      </NotificationProvider>
     </ThemeProvider>
   );
 };

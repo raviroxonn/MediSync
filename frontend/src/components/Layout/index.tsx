@@ -37,9 +37,11 @@ import {
   LightMode,
   Logout as LogoutIcon,
   Person as PersonIcon,
+  DirectionsRun,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useNotification } from '../../contexts/NotificationContext';
 
 const drawerWidth = 240;
 
@@ -60,12 +62,34 @@ const Layout = () => {
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const { mode, toggleTheme } = useTheme();
+  const { notifications, showNotification, requestPermission } = useNotification();
+  const notificationCount = notifications.length;
 
   useEffect(() => {
     if (isMobile) {
       setDrawerOpen(false);
     }
   }, [isMobile]);
+
+  useEffect(() => {
+    requestPermission();
+    
+    showNotification(
+      'Welcome to MediSync! Your emergency response system is active.',
+      'success',
+      'System Status'
+    );
+
+    const timer = setTimeout(() => {
+      showNotification(
+        'New emergency case reported in Downtown Area',
+        'warning',
+        'Emergency Alert'
+      );
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [showNotification, requestPermission]);
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
@@ -77,6 +101,14 @@ const Layout = () => {
 
   const handleProfileMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleNotificationClick = () => {
+    showNotification(
+      'You have ' + notificationCount + ' active notifications',
+      'info',
+      'Notification Center'
+    );
   };
 
   const drawerVariants = {
@@ -161,6 +193,7 @@ const Layout = () => {
           </Tooltip>
           <Tooltip title="Notifications">
             <IconButton 
+              onClick={handleNotificationClick}
               sx={{ 
                 mr: 2,
                 transition: 'transform 0.2s ease',
@@ -170,27 +203,8 @@ const Layout = () => {
               }}
             >
               <Badge 
-                badgeContent={4} 
+                badgeContent={notificationCount} 
                 color="error"
-                sx={{
-                  '& .MuiBadge-badge': {
-                    animation: 'pulse 2s infinite',
-                    '@keyframes pulse': {
-                      '0%': {
-                        transform: 'scale(1)',
-                        opacity: 1,
-                      },
-                      '50%': {
-                        transform: 'scale(1.2)',
-                        opacity: 0.8,
-                      },
-                      '100%': {
-                        transform: 'scale(1)',
-                        opacity: 1,
-                      },
-                    },
-                  },
-                }}
               >
                 <Notifications />
               </Badge>

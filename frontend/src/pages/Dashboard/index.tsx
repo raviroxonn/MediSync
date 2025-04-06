@@ -75,6 +75,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import StatCard from '../../components/common/StatCard';
 import StatusBadge from '../../components/common/StatusBadge';
+import { useNotification } from '../../contexts/NotificationContext';
 
 // Register ChartJS components
 ChartJS.register(
@@ -194,6 +195,8 @@ const Dashboard = () => {
   const theme = useTheme();
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
+  const { notifications, showNotification } = useNotification();
+  const notificationCount = notifications.length;
   const [stats, setStats] = useState({
     activeEmergencies: 12,
     availableTeams: 8,
@@ -269,6 +272,14 @@ const Dashboard = () => {
     ],
   };
 
+  const handleNotificationClick = () => {
+    showNotification(
+      'You have ' + notificationCount + ' active notifications',
+      'info',
+      'Notification Center'
+    );
+  };
+
   return (
     <Box
       component={motion.div}
@@ -285,11 +296,25 @@ const Dashboard = () => {
           Emergency Response Dashboard
         </Typography>
         <Stack direction="row" spacing={2} alignItems="center">
-          <Badge badgeContent={3} color="error">
-            <IconButton color="primary">
-              <NotificationsIcon />
+          <Tooltip title="Notifications">
+            <IconButton 
+              onClick={handleNotificationClick}
+              color="primary"
+              sx={{
+                transition: 'transform 0.2s ease',
+                '&:hover': {
+                  transform: 'scale(1.1)',
+                }
+              }}
+            >
+              <Badge 
+                badgeContent={notificationCount} 
+                color="error"
+              >
+                <NotificationsIcon />
+              </Badge>
             </IconButton>
-          </Badge>
+          </Tooltip>
           <Tooltip title="Refresh Data">
             <IconButton 
               onClick={handleRefresh} 
