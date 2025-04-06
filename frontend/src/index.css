@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 /* Modern CSS Reset */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -5,92 +7,76 @@
   padding: 0;
 }
 
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+html {
+  font-size: 16px;
   scroll-behavior: smooth;
 }
 
 body {
-  line-height: 1.5;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  will-change: auto;
-  -webkit-tap-highlight-color: transparent;
+  color: #333;
+  line-height: 1.6;
+  min-height: 100vh;
+  text-rendering: optimizeSpeed;
+  overflow-x: hidden;
 }
 
-#root {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  isolation: isolate; /* Creates a new stacking context */
+input, button, textarea, select {
+  font: inherit;
 }
 
 img, picture, video, canvas, svg {
   display: block;
   max-width: 100%;
-  height: auto;
-}
-
-input, button, textarea, select {
-  font: inherit;
-  touch-action: manipulation; /* Improves touch response */
-}
-
-button {
-  cursor: pointer;
-  background: transparent;
-  border: none;
-  transition: transform 0.15s ease, opacity 0.15s ease;
-}
-
-button:active {
-  transform: scale(0.97);
 }
 
 p, h1, h2, h3, h4, h5, h6 {
   overflow-wrap: break-word;
 }
 
-a {
-  text-decoration: none;
-  color: inherit;
-  transition: all 0.2s ease;
+/* Remove all animations and transitions for people that prefer not to see them */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html {
+    scroll-behavior: auto !important;
+  }
 }
 
-/* GPU Acceleration for Animations */
-.gpu-accelerated {
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  perspective: 1000px;
-}
-
-/* Scrollbar Styles */
+/* Scrollbar styles */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-  transition: background 0.2s ease;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
 }
 
+/* Dark mode scrollbar */
 @media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
   ::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
   }
@@ -100,82 +86,121 @@ a {
   }
 }
 
-/* Utility Classes */
+/* Utility classes */
 .visually-hidden {
-  position: absolute;
-  width: 1px;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   height: 1px;
-  padding: 0;
-  margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  position: absolute;
   white-space: nowrap;
-  border: 0;
+  width: 1px;
 }
 
 .no-scroll {
   overflow: hidden;
 }
 
-/* Smoother Animation Classes */
+/* Basic animations */
 .fade-enter {
   opacity: 0;
-  transform: translateY(5px);
-  will-change: opacity, transform;
 }
 
 .fade-enter-active {
   opacity: 1;
-  transform: translateY(0);
-  transition: opacity 200ms ease-out, transform 200ms ease-out;
+  transition: opacity 200ms ease-out;
 }
 
 .fade-exit {
   opacity: 1;
-  transform: translateY(0);
-  will-change: opacity, transform;
 }
 
 .fade-exit-active {
   opacity: 0;
-  transform: translateY(-5px);
-  transition: opacity 200ms ease-in, transform 200ms ease-in;
+  transition: opacity 150ms ease-in;
 }
 
-/* Animation Keyframes */
+/* GPU-accelerated elements for smoother animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform, opacity;
+}
+
+/* Optimized animations */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes slideUp {
-  from { transform: translateY(10px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translate3d(0, 20px, 0);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(66, 133, 244, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
-/* Reusable Animation Classes */
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease forwards;
+/* Fast tap highlight on mobile */
+a, button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
-.animate-slideUp {
-  animation: slideUp 0.4s ease forwards;
+/* Better focus styles */
+:focus-visible {
+  outline: 3px solid rgba(66, 153, 225, 0.6);
+  outline-offset: 2px;
 }
 
-.animate-delay-1 {
-  animation-delay: 0.1s;
+/* Content transitions */
+.content-transition {
+  transition-property: opacity, transform;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-out;
 }
 
-.animate-delay-2 {
-  animation-delay: 0.2s;
+.content-transition:hover {
+  transition-duration: 0.15s;
 }
 
-.animate-delay-3 {
-  animation-delay: 0.3s;
+/* Prevent layout shifts during transitions */
+.prevent-layout-shift {
+  min-height: 1em;
+  position: relative;
+}
+
+/* Responsive design utilities */
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+/* Low motion alternatives */
+@media (prefers-reduced-motion: reduce) {
+  .fade-enter-active,
+  .fade-exit-active,
+  .content-transition {
+    transition-duration: 0.01ms !important;
+  }
+  
+  .gpu-accelerated {
+    will-change: auto;
+  }
 }

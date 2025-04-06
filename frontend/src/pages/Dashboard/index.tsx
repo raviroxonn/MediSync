@@ -57,7 +57,7 @@ import {
   Settings as SettingsIcon,
   DirectionsRun,
 } from '@mui/icons-material';
-import { useState, useEffect, useCallback, useTransition, Suspense } from 'react';
+import { useState, useEffect, useCallback, useTransition, Suspense, useMemo } from 'react';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -72,7 +72,7 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { motion, AnimatePresence, Variants, useReducedMotion } from 'framer-motion';
 import StatCard from '../../components/common/StatCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -91,63 +91,55 @@ ChartJS.register(
   Filler
 );
 
-// Animation variants
+// Animation variants - simplified for better performance
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
     transition: {
       when: "beforeChildren",
-      staggerChildren: 0.1
+      staggerChildren: 0.05
     }
   }
 };
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 10 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 24
+      type: "tween",
+      duration: 0.2
     }
   }
 };
 
 const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  hidden: { opacity: 0, y: 10 },
   visible: {
     opacity: 1,
     y: 0,
-    scale: 1,
     transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 24
+      type: "tween",
+      duration: 0.2
     }
   },
   hover: {
-    y: -10,
-    boxShadow: "0px 10px 25px rgba(0, 0, 0, 0.1)",
+    y: -5,
     transition: {
-      type: "spring",
-      stiffness: 400,
-      damping: 10
+      type: "tween",
+      duration: 0.2
     }
   }
 };
 
 const chartVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.9 },
+  hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    scale: 1,
     transition: {
-      delay: 0.2,
-      duration: 0.5,
-      ease: "easeOut"
+      duration: 0.2
     }
   }
 };
@@ -258,6 +250,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { notifications, showNotification } = useNotification();
   const notificationCount = notifications.length;
+  const shouldReduceMotion = useReducedMotion();
   const [stats, setStats] = useState({
     activeEmergencies: 12,
     availableTeams: 8,
@@ -302,7 +295,7 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [handleRefresh]);
 
-  const responseTimeData = {
+  const responseTimeData = useMemo(() => ({
     labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
     datasets: [
       {
@@ -314,9 +307,9 @@ const Dashboard = () => {
         tension: 0.4,
       },
     ],
-  };
+  }), [theme.palette.primary.main]);
 
-  const emergencyTypeData = {
+  const emergencyTypeData = useMemo(() => ({
     labels: ['Cardiac', 'Trauma', 'Respiratory', 'Neurological', 'Other'],
     datasets: [
       {
@@ -331,7 +324,7 @@ const Dashboard = () => {
         borderWidth: 0,
       },
     ],
-  };
+  }), [theme.palette.error.main, theme.palette.warning.main, theme.palette.info.main, theme.palette.success.main, theme.palette.grey]);
 
   const handleNotificationClick = () => {
     showNotification(
@@ -340,13 +333,29 @@ const Dashboard = () => {
       'Notification Center'
     );
   };
+  
+  // Skip animations if reduced motion is preferred
+  const getAnimationProps = () => {
+    if (shouldReduceMotion) {
+      return {
+        initial: undefined,
+        animate: undefined,
+        transition: undefined,
+        variants: undefined,
+        whileHover: undefined,
+      };
+    }
+    return {};
+  };
 
   return (
     <Box
       component={motion.div}
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
+      {...(shouldReduceMotion ? {} : {
+        variants: containerVariants,
+        initial: "hidden",
+        animate: "visible"
+      })}
       className="gpu-accelerated"
       sx={{
         p: 3,
@@ -357,7 +366,7 @@ const Dashboard = () => {
     >
       <Stack 
         component={motion.div}
-        variants={itemVariants}
+        {...(shouldReduceMotion ? {} : { variants: itemVariants })}
         direction="row" 
         justifyContent="space-between" 
         alignItems="center" 
@@ -365,9 +374,11 @@ const Dashboard = () => {
       >
         <Typography 
           component={motion.h1}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          {...(shouldReduceMotion ? {} : {
+            initial: { opacity: 0, x: -10 },
+            animate: { opacity: 1, x: 0 },
+            transition: { duration: 0.2 }
+          })}
           variant="h4" 
           fontWeight="bold" 
           color="primary"
@@ -376,9 +387,11 @@ const Dashboard = () => {
         </Typography>
         <Stack 
           component={motion.div}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          {...(shouldReduceMotion ? {} : {
+            initial: { opacity: 0, x: 10 },
+            animate: { opacity: 1, x: 0 },
+            transition: { duration: 0.2 }
+          })}
           direction="row" 
           spacing={2} 
           alignItems="center"
@@ -386,8 +399,10 @@ const Dashboard = () => {
           <Tooltip title="Notifications">
             <IconButton 
               component={motion.button}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              {...(shouldReduceMotion ? {} : {
+                whileHover: { scale: 1.1 },
+                whileTap: { scale: 0.95 }
+              })}
               onClick={handleNotificationClick}
               color="primary"
             >
@@ -402,8 +417,10 @@ const Dashboard = () => {
           <Tooltip title="Refresh Data">
             <IconButton 
               component={motion.button}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              {...(shouldReduceMotion ? {} : {
+                whileHover: { scale: 1.1 },
+                whileTap: { scale: 0.95 }
+              })}
               onClick={handleRefresh} 
               color="primary"
               disabled={isLoading || isPending}
@@ -425,65 +442,98 @@ const Dashboard = () => {
           </Box>
         }>
           {/* Stats Cards */}
-          <AnimatePresence>
-            <Grid item xs={12} sm={6} md={3} component={motion.div} variants={itemVariants}>
-              <motion.div whileHover="hover" variants={cardVariants}>
-                <StatCard
-                  title="Active Emergencies"
-                  value={stats.activeEmergencies}
-                  icon={<EmergencyIcon />}
-                  color="error"
-                  trend={{ value: 8, isPositive: false }}
-                  loading={isPending}
-                />
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3} component={motion.div} variants={itemVariants}>
-              <motion.div whileHover="hover" variants={cardVariants}>
-                <StatCard
-                  title="Available Teams"
-                  value={stats.availableTeams}
-                  icon={<DirectionsRun />}
-                  color="success"
-                  trend={{ value: 2, isPositive: true }}
-                  loading={isPending}
-                />
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3} component={motion.div} variants={itemVariants}>
-              <motion.div whileHover="hover" variants={cardVariants}>
-                <StatCard
-                  title="Avg. Response Time"
-                  value={`${stats.avgResponseTime}m`}
-                  icon={<TimeIcon />}
-                  color="warning"
-                  trend={{ value: 12, isPositive: true }}
-                  loading={isPending}
-                />
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3} component={motion.div} variants={itemVariants}>
-              <motion.div whileHover="hover" variants={cardVariants}>
-                <StatCard
-                  title="Success Rate"
-                  value={`${stats.successRate}%`}
-                  icon={<CheckCircleIcon />}
-                  color="info"
-                  trend={{ value: 5, isPositive: true }}
-                  loading={isPending}
-                />
-              </motion.div>
-            </Grid>
-          </AnimatePresence>
+          <Grid item xs={12} sm={6} md={3} component={motion.div} 
+            {...(shouldReduceMotion ? {} : { variants: itemVariants })}
+          >
+            <motion.div 
+              {...(shouldReduceMotion ? {} : {
+                whileHover: "hover",
+                variants: cardVariants
+              })}
+            >
+              <StatCard
+                title="Active Emergencies"
+                value={stats.activeEmergencies}
+                icon={<EmergencyIcon />}
+                color="error"
+                trend={{ value: 8, isPositive: false }}
+                loading={isPending}
+              />
+            </motion.div>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3} component={motion.div} 
+            {...(shouldReduceMotion ? {} : { variants: itemVariants })}
+          >
+            <motion.div 
+              {...(shouldReduceMotion ? {} : {
+                whileHover: "hover",
+                variants: cardVariants
+              })}
+            >
+              <StatCard
+                title="Available Teams"
+                value={stats.availableTeams}
+                icon={<DirectionsRun />}
+                color="success"
+                trend={{ value: 2, isPositive: true }}
+                loading={isPending}
+              />
+            </motion.div>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3} component={motion.div} 
+            {...(shouldReduceMotion ? {} : { variants: itemVariants })}
+          >
+            <motion.div 
+              {...(shouldReduceMotion ? {} : {
+                whileHover: "hover",
+                variants: cardVariants
+              })}
+            >
+              <StatCard
+                title="Avg. Response Time"
+                value={`${stats.avgResponseTime}m`}
+                icon={<TimeIcon />}
+                color="warning"
+                trend={{ value: 12, isPositive: true }}
+                loading={isPending}
+              />
+            </motion.div>
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={3} component={motion.div} 
+            {...(shouldReduceMotion ? {} : { variants: itemVariants })}
+          >
+            <motion.div 
+              {...(shouldReduceMotion ? {} : {
+                whileHover: "hover",
+                variants: cardVariants
+              })}
+            >
+              <StatCard
+                title="Success Rate"
+                value={`${stats.successRate}%`}
+                icon={<CheckCircleIcon />}
+                color="info"
+                trend={{ value: 5, isPositive: true }}
+                loading={isPending}
+              />
+            </motion.div>
+          </Grid>
 
           {/* Main Content */}
-          <Grid item xs={12} md={8} component={motion.div} variants={itemVariants}>
+          <Grid item xs={12} md={8} component={motion.div} 
+            {...(shouldReduceMotion ? {} : { variants: itemVariants })}
+          >
             <Card
               component={motion.div}
-              variants={cardVariants}
-              initial="hidden"
-              animate="visible"
-              whileHover="hover"
+              {...(shouldReduceMotion ? {} : {
+                variants: cardVariants,
+                initial: "hidden",
+                animate: "visible",
+                whileHover: "hover"
+              })}
               sx={{
                 p: 3,
                 height: '100%',
@@ -499,9 +549,11 @@ const Dashboard = () => {
                   {['24h', '7d', '30d'].map((range, index) => (
                     <motion.div
                       key={range}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 * index }}
+                      {...(shouldReduceMotion ? {} : {
+                        initial: { opacity: 0, y: -5 },
+                        animate: { opacity: 1, y: 0 },
+                        transition: { delay: 0.05 * index, duration: 0.2 }
+                      })}
                     >
                       <Button
                         size="small"
@@ -535,9 +587,11 @@ const Dashboard = () => {
                   </Box>
                 )}
                 <motion.div
-                  variants={chartVariants}
-                  initial="hidden"
-                  animate="visible"
+                  {...(shouldReduceMotion ? {} : {
+                    variants: chartVariants,
+                    initial: "hidden",
+                    animate: "visible"
+                  })}
                   style={{ height: '100%' }}
                 >
                   <Line
@@ -565,7 +619,7 @@ const Dashboard = () => {
                         },
                       },
                       animation: {
-                        duration: 1500,
+                        duration: shouldReduceMotion ? 0 : 1000,
                       },
                     }}
                   />
@@ -575,13 +629,17 @@ const Dashboard = () => {
           </Grid>
 
           {/* Emergency Types */}
-          <Grid item xs={12} md={4} component={motion.div} variants={itemVariants}>
+          <Grid item xs={12} md={4} component={motion.div} 
+            {...(shouldReduceMotion ? {} : { variants: itemVariants })}
+          >
             <Card
               component={motion.div}
-              variants={cardVariants}
-              initial="hidden"
-              animate="visible"
-              whileHover="hover"
+              {...(shouldReduceMotion ? {} : {
+                variants: cardVariants,
+                initial: "hidden",
+                animate: "visible",
+                whileHover: "hover"
+              })}
               sx={{
                 p: 3,
                 height: '100%',
@@ -613,9 +671,11 @@ const Dashboard = () => {
               )}
               <Box sx={{ height: 300, display: 'flex', justifyContent: 'center' }}>
                 <motion.div
-                  variants={chartVariants}
-                  initial="hidden"
-                  animate="visible"
+                  {...(shouldReduceMotion ? {} : {
+                    variants: chartVariants,
+                    initial: "hidden",
+                    animate: "visible"
+                  })}
                   style={{ height: '100%', width: '100%' }}
                 >
                   <Doughnut
@@ -629,9 +689,9 @@ const Dashboard = () => {
                         },
                       },
                       animation: {
-                        animateRotate: true,
-                        animateScale: true,
-                        duration: 1500,
+                        animateRotate: !shouldReduceMotion,
+                        animateScale: !shouldReduceMotion,
+                        duration: shouldReduceMotion ? 0 : 1000,
                       },
                     }}
                   />
@@ -653,64 +713,64 @@ const Dashboard = () => {
             >
               <Typography variant="h6" mb={2}>Recent Alerts</Typography>
               <List>
-                <AnimatePresence>
-                  {mockAlerts.map((alert) => (
-                    <motion.div
-                      key={alert.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
+                {mockAlerts.map((alert, index) => (
+                  <motion.div
+                    key={alert.id}
+                    {...(shouldReduceMotion ? {} : {
+                      initial: { opacity: 0, x: -10 },
+                      animate: { opacity: 1, x: 0 },
+                      transition: { delay: index * 0.05, duration: 0.2 }
+                    })}
+                  >
+                    <ListItem
+                      sx={{
+                        mb: 2,
+                        borderRadius: 2,
+                        bgcolor: alpha(theme.palette.primary.main, 0.05),
+                        opacity: isPending ? 0.7 : 1,
+                        transition: 'opacity 0.2s',
+                      }}
                     >
-                      <ListItem
-                        sx={{
-                          mb: 2,
-                          borderRadius: 2,
-                          bgcolor: alpha(theme.palette.primary.main, 0.05),
-                          opacity: isPending ? 0.7 : 1,
-                          transition: 'opacity 0.2s',
-                        }}
-                      >
-                        <ListItemAvatar>
-                          <Avatar
-                            sx={{
-                              bgcolor: alpha(
-                                theme.palette[alert.severity === 'critical' ? 'error' : alert.severity === 'moderate' ? 'warning' : 'success'].main,
-                                0.2
-                              ),
-                              color: theme.palette[alert.severity === 'critical' ? 'error' : alert.severity === 'moderate' ? 'warning' : 'success'].main,
-                            }}
+                      <ListItemAvatar>
+                        <Avatar
+                          sx={{
+                            bgcolor: alpha(
+                              theme.palette[alert.severity === 'critical' ? 'error' : alert.severity === 'moderate' ? 'warning' : 'success'].main,
+                              0.2
+                            ),
+                            color: theme.palette[alert.severity === 'critical' ? 'error' : alert.severity === 'moderate' ? 'warning' : 'success'].main,
+                          }}
+                        >
+                          <EmergencyIcon />
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Typography variant="body1" component="span">
+                            {alert.type}
+                          </Typography>
+                        }
+                        secondary={
+                          <Stack 
+                            direction="row" 
+                            alignItems="center" 
+                            spacing={1} 
+                            component="span"
                           >
-                            <EmergencyIcon />
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={
-                            <Typography variant="body1" component="span">
-                              {alert.type}
+                            <LocationIcon sx={{ fontSize: 14 }} />
+                            <Typography variant="body2" component="span">
+                              {alert.location}
                             </Typography>
-                          }
-                          secondary={
-                            <Stack 
-                              direction="row" 
-                              alignItems="center" 
-                              spacing={1} 
-                              component="span"
-                            >
-                              <LocationIcon sx={{ fontSize: 14 }} />
-                              <Typography variant="body2" component="span">
-                                {alert.location}
-                              </Typography>
-                              <Typography variant="caption" component="span" color="text.secondary">
-                                • {alert.timestamp}
-                              </Typography>
-                            </Stack>
-                          }
-                        />
-                        <StatusBadge status={alert.severity} />
-                      </ListItem>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                            <Typography variant="caption" component="span" color="text.secondary">
+                              • {alert.timestamp}
+                            </Typography>
+                          </Stack>
+                        }
+                      />
+                      <StatusBadge status={alert.severity} />
+                    </ListItem>
+                  </motion.div>
+                ))}
               </List>
             </Card>
           </Grid>
@@ -744,39 +804,47 @@ const Dashboard = () => {
                 </AvatarGroup>
               </Stack>
               <List>
-                {mockTeamMembers.map((member) => (
-                  <ListItem
+                {mockTeamMembers.map((member, index) => (
+                  <motion.div
                     key={member.id}
-                    sx={{
-                      mb: 2,
-                      borderRadius: 2,
-                      bgcolor: alpha(theme.palette.primary.main, 0.05),
-                      opacity: isPending ? 0.7 : 1,
-                      transition: 'opacity 0.2s',
-                    }}
+                    {...(shouldReduceMotion ? {} : {
+                      initial: { opacity: 0, x: -10 },
+                      animate: { opacity: 1, x: 0 },
+                      transition: { delay: index * 0.05, duration: 0.2 }
+                    })}
                   >
-                    <ListItemAvatar>
-                      <Avatar src={member.avatar} />
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Typography variant="body1" component="span">
-                          {member.name}
-                        </Typography>
-                      }
-                      secondary={
-                        <Typography variant="body2" component="span" color="text.secondary">
-                          {member.role}
-                        </Typography>
-                      }
-                    />
-                    <Chip
-                      label={member.status}
-                      size="small"
-                      color={member.status === 'active' ? 'success' : member.status === 'standby' ? 'warning' : 'error'}
-                      sx={{ textTransform: 'capitalize' }}
-                    />
-                  </ListItem>
+                    <ListItem
+                      sx={{
+                        mb: 2,
+                        borderRadius: 2,
+                        bgcolor: alpha(theme.palette.primary.main, 0.05),
+                        opacity: isPending ? 0.7 : 1,
+                        transition: 'opacity 0.2s',
+                      }}
+                    >
+                      <ListItemAvatar>
+                        <Avatar src={member.avatar} />
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Typography variant="body1" component="span">
+                            {member.name}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography variant="body2" component="span" color="text.secondary">
+                            {member.role}
+                          </Typography>
+                        }
+                      />
+                      <Chip
+                        label={member.status}
+                        size="small"
+                        color={member.status === 'active' ? 'success' : member.status === 'standby' ? 'warning' : 'error'}
+                        sx={{ textTransform: 'capitalize' }}
+                      />
+                    </ListItem>
+                  </motion.div>
                 ))}
               </List>
             </Card>

@@ -1,5 +1,5 @@
 import { Box, Card, Typography, useTheme, alpha, Skeleton } from '@mui/material';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 interface StatCardProps {
   title: string;
@@ -15,44 +15,36 @@ interface StatCardProps {
 
 const StatCard = ({ title, value, icon, trend, color = 'primary', loading = false }: StatCardProps) => {
   const theme = useTheme();
+  const shouldReduceMotion = useReducedMotion();
 
+  // Simpler animation variants for better performance
   const valueVariants = {
-    hidden: { opacity: 0, y: 10 },
+    hidden: { opacity: 0 },
     visible: { 
-      opacity: 1, 
-      y: 0,
+      opacity: 1,
       transition: {
-        type: "spring",
-        stiffness: 400,
-        damping: 10
+        duration: 0.2
       }
     },
     exit: { 
       opacity: 0,
-      y: -10,
-      transition: { duration: 0.2 }
+      transition: { duration: 0.1 }
     }
   };
 
   const iconVariants = {
-    hidden: { scale: 0.8, opacity: 0 },
+    hidden: { opacity: 0 },
     visible: { 
-      scale: 1, 
       opacity: 1,
       transition: {
-        type: "spring",
-        stiffness: 500,
-        damping: 15,
-        delay: 0.1
+        duration: 0.2,
+        delay: 0.05
       }
     },
     hover: {
-      scale: 1.1,
-      rotate: 5,
+      scale: 1.05,
       transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 10
+        duration: 0.2
       }
     }
   };
@@ -74,7 +66,7 @@ const StatCard = ({ title, value, icon, trend, color = 'primary', loading = fals
         boxShadow: `0 8px 32px -8px ${alpha(theme.palette[color].main, 0.2)}`,
         border: `1px solid ${alpha(theme.palette[color].main, 0.05)}`,
         backdropFilter: 'blur(8px)',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -89,10 +81,10 @@ const StatCard = ({ title, value, icon, trend, color = 'primary', loading = fals
     >
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
         <motion.div
-          variants={iconVariants}
-          initial="hidden"
-          animate="visible"
-          whileHover="hover"
+          variants={shouldReduceMotion ? undefined : iconVariants}
+          initial={shouldReduceMotion ? undefined : "hidden"}
+          animate={shouldReduceMotion ? undefined : "visible"}
+          whileHover={shouldReduceMotion ? undefined : "hover"}
         >
           <Box
             sx={{
@@ -104,7 +96,7 @@ const StatCard = ({ title, value, icon, trend, color = 'primary', loading = fals
               color: theme.palette[color].main,
               backgroundColor: alpha(theme.palette[color].main, 0.1),
               boxShadow: `0 4px 12px ${alpha(theme.palette[color].main, 0.2)}`,
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
             {icon}
@@ -112,9 +104,9 @@ const StatCard = ({ title, value, icon, trend, color = 'primary', loading = fals
         </motion.div>
         {trend && (
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
+            initial={shouldReduceMotion ? undefined : { opacity: 0 }}
+            animate={shouldReduceMotion ? undefined : { opacity: 1 }}
+            transition={shouldReduceMotion ? undefined : { duration: 0.2 }}
             style={{ marginLeft: 'auto' }}
           >
             <Typography
@@ -138,7 +130,7 @@ const StatCard = ({ title, value, icon, trend, color = 'primary', loading = fals
           </motion.div>
         )}
       </Box>
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" presenceAffectsLayout={false}>
         {loading ? (
           <Box key="loading" sx={{ mb: 1 }}>
             <Skeleton variant="text" width="80%" height={40} />
@@ -146,10 +138,10 @@ const StatCard = ({ title, value, icon, trend, color = 'primary', loading = fals
         ) : (
           <motion.div
             key="content"
-            variants={valueVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
+            variants={shouldReduceMotion ? undefined : valueVariants}
+            initial={shouldReduceMotion ? undefined : "hidden"}
+            animate={shouldReduceMotion ? undefined : "visible"}
+            exit={shouldReduceMotion ? undefined : "exit"}
           >
             <Typography 
               variant="h4" 
@@ -172,10 +164,7 @@ const StatCard = ({ title, value, icon, trend, color = 'primary', loading = fals
           fontWeight: 500,
           mt: 'auto',
           opacity: 0.8,
-          transition: 'opacity 0.3s ease',
-          '&:hover': {
-            opacity: 1
-          }
+          transition: 'opacity 0.2s',
         }}
       >
         {title}

@@ -1,225 +1,204 @@
-import { Suspense, lazy } from 'react';
-import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { NotificationProvider } from './contexts/NotificationContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { lazy, Suspense, useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { CssBaseline, CircularProgress, Box } from '@mui/material';
+import ErrorBoundary from './components/ErrorBoundary';
 import LoadingIndicator from './components/common/LoadingIndicator';
-import Layout from './components/Layout';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import useAuth from './hooks/useAuth';
+import { lightTheme, darkTheme } from './theme';
 
-// Animation variants for page transitions
-const pageVariants = {
-  initial: {
-    opacity: 0,
-    y: 10
-  },
-  in: {
-    opacity: 1,
-    y: 0
-  },
-  out: {
-    opacity: 0,
-    y: -10
-  }
-};
-
-const pageTransition = {
-  type: 'tween',
-  ease: 'easeInOut',
-  duration: 0.3
-};
-
-// Lazy load Auth components
+// Lazy load components for better performance
 const Login = lazy(() => import('./pages/Auth/Login'));
 const Register = lazy(() => import('./pages/Auth/Register'));
 const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
-
-// Lazy load main pages
+const Layout = lazy(() => import('./components/Layout'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Hospitals = lazy(() => import('./pages/Hospitals'));
-const Emergencies = lazy(() => import('./pages/Emergencies'));
 const Patients = lazy(() => import('./pages/Patients'));
-const Staff = lazy(() => import('./pages/Staff'));
+const PatientDetail = lazy(() => import('./pages/Patients/PatientDetail'));
+const Appointments = lazy(() => import('./pages/Appointments'));
 const Settings = lazy(() => import('./pages/Settings'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
-// Simple error boundary component
-const ErrorPage = () => (
-  <motion.div
-    initial="initial"
-    animate="in"
-    exit="out"
-    variants={pageVariants}
-    transition={pageTransition}
-    style={{ 
-      padding: '2rem', 
-      maxWidth: '600px', 
-      margin: '0 auto', 
-      textAlign: 'center'
-    }}
-  >
-    <h1>Page Not Found</h1>
-    <p>Sorry, the page you are looking for does not exist.</p>
-    <a href="/" style={{ color: '#3f51b5', textDecoration: 'none' }}>
-      Return to Home
-    </a>
-  </motion.div>
-);
+function App() {
+  const { isAuthenticated, loading } = useAuth();
+  const [mode, setMode] = useState<'light' | 'dark'>('light');
+  const theme = mode === 'light' ? lightTheme : darkTheme;
+  const shouldReduceMotion = useReducedMotion();
 
-// Protected route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <LoadingIndicator />;
-  }
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/auth/login" replace />;
-  }
-  
-  return <>{children}</>;
-};
+  // Simpler animation variants
+  const pageVariants = {
+    initial: { opacity: 0 },
+    in: { 
+      opacity: 1,
+      transition: {
+        duration: 0.2,
+        ease: "easeOut"
+      }
+    },
+    out: { 
+      opacity: 0,
+      transition: {
+        duration: 0.15,
+        ease: "easeIn"
+      }
+    }
+  };
 
-// Auth route component
-const AuthRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <LoadingIndicator />;
-  }
-  
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return <>{children}</>;
-};
+  const AppTheme = createTheme(theme);
 
-// Auth layout component
-const AuthLayout = () => (
-  <motion.div
-    initial="initial"
-    animate="in"
-    exit="out"
-    variants={pageVariants}
-    transition={pageTransition}
-    style={{ 
-      minHeight: '100vh',
-      backgroundColor: '#f5f5f5',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center'
-    }}
-  >
-    <Outlet />
-  </motion.div>
-);
+  // Handle system preference changes for dark mode
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setMode(e.matches ? 'dark' : 'light');
+    };
 
-// SuspenseWrapper for lazy-loaded components with animations
-const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<LoadingIndicator />}>
-    <motion.div
-      initial="initial"
-      animate="in"
-      exit="out"
-      variants={pageVariants}
-      transition={pageTransition}
-      style={{ width: '100%', height: '100%' }}
+    setMode(mediaQuery.matches ? 'dark' : 'light');
+    mediaQuery.addEventListener('change', handleChange);
+    
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
+
+  // Custom suspense fallback with simpler animation
+  const SuspenseFallback = () => (
+    <Box 
+      className="gpu-accelerated"
+      sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        width: '100%' 
+      }}
     >
-      {children}
-    </motion.div>
-  </Suspense>
-);
+      <LoadingIndicator />
+    </Box>
+  );
 
-// Configure the router
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Navigate to="/auth/login" replace />,
-    errorElement: <ErrorPage />,
-  },
-  {
-    path: '/auth',
-    element: (
-      <AuthProvider>
-        <AuthRoute>
-          <AuthLayout />
-        </AuthRoute>
-      </AuthProvider>
-    ),
-    children: [
-      {
-        index: true,
-        element: <Navigate to="/auth/login" replace />
-      },
-      {
-        path: 'login',
-        element: <SuspenseWrapper><Login /></SuspenseWrapper>
-      },
-      {
-        path: 'register',
-        element: <SuspenseWrapper><Register /></SuspenseWrapper>
-      },
-      {
-        path: 'forgot-password',
-        element: <SuspenseWrapper><ForgotPassword /></SuspenseWrapper>
-      },
-      {
-        path: 'reset-password',
-        element: <SuspenseWrapper><ResetPassword /></SuspenseWrapper>
-      }
-    ]
-  },
-  {
-    element: (
-      <AuthProvider>
-        <ProtectedRoute>
-          <Layout />
-        </ProtectedRoute>
-      </AuthProvider>
-    ),
-    children: [
-      {
-        path: 'dashboard',
-        element: <SuspenseWrapper><Dashboard /></SuspenseWrapper>
-      },
-      {
-        path: 'hospitals',
-        element: <SuspenseWrapper><Hospitals /></SuspenseWrapper>
-      },
-      {
-        path: 'emergencies',
-        element: <SuspenseWrapper><Emergencies /></SuspenseWrapper>
-      },
-      {
-        path: 'patients',
-        element: <SuspenseWrapper><Patients /></SuspenseWrapper>
-      },
-      {
-        path: 'staff',
-        element: <SuspenseWrapper><Staff /></SuspenseWrapper>
-      },
-      {
-        path: 'settings',
-        element: <SuspenseWrapper><Settings /></SuspenseWrapper>
-      }
-    ]
-  },
-  {
-    path: '*',
-    element: <ErrorPage />
-  }
-]);
+  // Protected route component
+  const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    if (loading) return <SuspenseFallback />;
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    return <>{children}</>;
+  };
 
-const App = () => {
   return (
-    <ThemeProvider>
-      <NotificationProvider>
-        <RouterProvider router={router} fallbackElement={<LoadingIndicator />} />
-      </NotificationProvider>
+    <ThemeProvider theme={AppTheme}>
+      <CssBaseline />
+      <ErrorBoundary>
+        <BrowserRouter>
+          <AnimatePresence mode="wait" initial={false}>
+            <Suspense fallback={<SuspenseFallback />}>
+              <Routes>
+                <Route 
+                  path="/login" 
+                  element={
+                    !isAuthenticated ? (
+                      <motion.div
+                        key="login"
+                        className="gpu-accelerated"
+                        variants={shouldReduceMotion ? undefined : pageVariants}
+                        initial={shouldReduceMotion ? undefined : "initial"}
+                        animate={shouldReduceMotion ? undefined : "in"}
+                        exit={shouldReduceMotion ? undefined : "out"}
+                      >
+                        <Login />
+                      </motion.div>
+                    ) : (
+                      <Navigate to="/dashboard" replace />
+                    )
+                  } 
+                />
+                <Route 
+                  path="/register" 
+                  element={
+                    !isAuthenticated ? (
+                      <motion.div
+                        key="register"
+                        className="gpu-accelerated"
+                        variants={shouldReduceMotion ? undefined : pageVariants}
+                        initial={shouldReduceMotion ? undefined : "initial"}
+                        animate={shouldReduceMotion ? undefined : "in"}
+                        exit={shouldReduceMotion ? undefined : "out"}
+                      >
+                        <Register />
+                      </motion.div>
+                    ) : (
+                      <Navigate to="/dashboard" replace />
+                    )
+                  } 
+                />
+                <Route 
+                  path="/forgot-password" 
+                  element={
+                    <motion.div
+                      key="forgot-password"
+                      className="gpu-accelerated"
+                      variants={shouldReduceMotion ? undefined : pageVariants}
+                      initial={shouldReduceMotion ? undefined : "initial"}
+                      animate={shouldReduceMotion ? undefined : "in"}
+                      exit={shouldReduceMotion ? undefined : "out"}
+                    >
+                      <ForgotPassword />
+                    </motion.div>
+                  } 
+                />
+                <Route 
+                  path="/reset-password" 
+                  element={
+                    <motion.div
+                      key="reset-password"
+                      className="gpu-accelerated"
+                      variants={shouldReduceMotion ? undefined : pageVariants}
+                      initial={shouldReduceMotion ? undefined : "initial"}
+                      animate={shouldReduceMotion ? undefined : "in"}
+                      exit={shouldReduceMotion ? undefined : "out"}
+                    >
+                      <ResetPassword />
+                    </motion.div>
+                  } 
+                />
+                <Route 
+                  path="/" 
+                  element={
+                    <ProtectedRoute>
+                      <Layout setMode={setMode} mode={mode} />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="patients" element={<Patients />} />
+                  <Route path="patients/:id" element={<PatientDetail />} />
+                  <Route path="appointments" element={<Appointments />} />
+                  <Route path="settings" element={<Settings />} />
+                </Route>
+                <Route 
+                  path="*" 
+                  element={
+                    <motion.div
+                      key="not-found"
+                      className="gpu-accelerated"
+                      variants={shouldReduceMotion ? undefined : pageVariants}
+                      initial={shouldReduceMotion ? undefined : "initial"}
+                      animate={shouldReduceMotion ? undefined : "in"}
+                      exit={shouldReduceMotion ? undefined : "out"}
+                    >
+                      <NotFound />
+                    </motion.div>
+                  } 
+                />
+              </Routes>
+            </Suspense>
+          </AnimatePresence>
+        </BrowserRouter>
+      </ErrorBoundary>
     </ThemeProvider>
   );
-};
+}
 
 export default App;

@@ -39,7 +39,7 @@ import {
   Person as PersonIcon,
   DirectionsRun,
 } from '@mui/icons-material';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { motion, AnimatePresence, Variants, useReducedMotion } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -47,7 +47,7 @@ import { useAuth } from '../../contexts/AuthContext';
 const drawerWidth = 240;
 
 const menuItems = [
-  { text: 'Dashboard', icon: <Dashboard />, path: '/' },
+  { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
   { text: 'Hospitals', icon: <LocalHospital />, path: '/hospitals' },
   { text: 'Emergencies', icon: <Emergency />, path: '/emergencies' },
   { text: 'Patients', icon: <PersonIcon />, path: '/patients' },
@@ -60,39 +60,31 @@ const drawerVariants: Variants = {
   open: {
     width: drawerWidth,
     transition: { 
-      duration: 0.3,
-      type: "spring",
-      stiffness: 500,
-      damping: 40
+      duration: 0.2,
+      type: "tween",
     }
   },
   closed: {
     width: 72,
     transition: { 
-      duration: 0.3,
-      type: "spring",
-      stiffness: 500,
-      damping: 40
+      duration: 0.2,
+      type: "tween",
     }
   },
   mobile: {
     width: drawerWidth,
     x: 0,
     transition: { 
-      duration: 0.3,
-      type: "spring",
-      stiffness: 500,
-      damping: 40
+      duration: 0.2,
+      type: "tween",
     }
   },
   mobileClosed: {
     width: drawerWidth,
     x: -drawerWidth,
     transition: { 
-      duration: 0.3,
-      type: "spring",
-      stiffness: 500,
-      damping: 40
+      duration: 0.2,
+      type: "tween",
     }
   }
 };
@@ -102,27 +94,24 @@ const contentVariants: Variants = {
     marginLeft: drawerWidth,
     width: `calc(100% - ${drawerWidth}px)`,
     transition: { 
-      duration: 0.3,
-      type: "spring",
-      stiffness: 500,
-      damping: 40
+      duration: 0.2,
+      type: "tween",
     }
   },
   closed: {
     marginLeft: 72,
     width: `calc(100% - 72px)`,
     transition: { 
-      duration: 0.3,
-      type: "spring",
-      stiffness: 500,
-      damping: 40
+      duration: 0.2,
+      type: "tween",
     }
   },
   mobile: {
     marginLeft: 0,
     width: '100%',
     transition: { 
-      duration: 0.3
+      duration: 0.2,
+      type: "tween",
     }
   }
 };
@@ -130,22 +119,20 @@ const contentVariants: Variants = {
 const menuItemVariants: Variants = {
   hidden: { 
     opacity: 0, 
-    x: -20 
+    x: -10 
   },
   visible: (i: number) => ({ 
     opacity: 1, 
     x: 0,
     transition: { 
-      delay: i * 0.05,
-      duration: 0.3,
-      ease: "easeOut"
+      delay: i * 0.03,
+      duration: 0.2,
     }
   }),
   hover: {
-    x: 6,
+    x: 5,
     transition: { 
       duration: 0.2, 
-      ease: "easeOut" 
     }
   }
 };
@@ -161,6 +148,7 @@ const Layout = () => {
   const { notifications, showNotification, requestPermission } = useNotification();
   const { user, logout } = useAuth();
   const notificationCount = notifications.length;
+  const shouldReduceMotion = useReducedMotion();
   
   const [scrolled, setScrolled] = useState(false);
 
@@ -224,16 +212,28 @@ const Layout = () => {
     handleProfileMenuClose();
   };
 
+  // Simplified animations for reduced motion
+  const getAnimationProps = () => {
+    if (shouldReduceMotion) {
+      return {
+        initial: undefined,
+        animate: undefined,
+        transition: undefined,
+        variants: undefined,
+      };
+    }
+    return {};
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       <AppBar
         component={motion.div}
-        initial={{ y: -70 }}
-        animate={{ y: 0 }}
-        transition={{ 
-          type: "spring",
-          stiffness: 500,
-          damping: 30
+        initial={shouldReduceMotion ? undefined : { y: -10 }}
+        animate={shouldReduceMotion ? undefined : { y: 0 }}
+        transition={shouldReduceMotion ? undefined : { 
+          duration: 0.2,
+          type: "tween",
         }}
         position="fixed"
         elevation={0}
@@ -246,7 +246,7 @@ const Layout = () => {
             xs: 0, 
             md: `${drawerOpen ? drawerWidth : 72}px` 
           },
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
           backdropFilter: 'blur(10px)',
           backgroundColor: alpha(
             muiTheme.palette.background.default, 
@@ -262,8 +262,8 @@ const Layout = () => {
         <Toolbar>
           <IconButton
             component={motion.button}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={shouldReduceMotion ? undefined : { scale: 1.1 }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             color="inherit"
             edge="start"
             onClick={handleDrawerToggle}
@@ -278,8 +278,8 @@ const Layout = () => {
           <Tooltip title={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
             <IconButton 
               component={motion.button}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={shouldReduceMotion ? undefined : { scale: 1.1 }}
+              whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
               onClick={toggleTheme} 
               sx={{ mr: 2 }}
             >
@@ -289,8 +289,8 @@ const Layout = () => {
           <Tooltip title="Notifications">
             <IconButton 
               component={motion.button}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={shouldReduceMotion ? undefined : { scale: 1.1 }}
+              whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
               onClick={handleNotificationClick}
               sx={{ mr: 2 }}
             >
@@ -305,8 +305,8 @@ const Layout = () => {
           <Tooltip title="Profile">
             <IconButton
               component={motion.button}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={shouldReduceMotion ? undefined : { scale: 1.1 }}
+              whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
               onClick={handleProfileMenuOpen}
               sx={{
                 padding: 0.5,
@@ -333,11 +333,11 @@ const Layout = () => {
         onClose={handleDrawerToggle}
         PaperProps={{
           component: motion.div,
-          variants: drawerVariants,
-          initial: isMobile ? 'mobileClosed' : 'closed',
-          animate: isMobile 
+          variants: shouldReduceMotion ? undefined : drawerVariants,
+          initial: shouldReduceMotion ? undefined : (isMobile ? 'mobileClosed' : 'closed'),
+          animate: shouldReduceMotion ? undefined : (isMobile 
             ? (drawerOpen ? 'mobile' : 'mobileClosed') 
-            : (drawerOpen ? 'open' : 'closed'),
+            : (drawerOpen ? 'open' : 'closed')),
           sx: {
             backgroundColor: alpha(muiTheme.palette.background.paper, 0.9),
             backdropFilter: 'blur(10px)',
@@ -351,9 +351,9 @@ const Layout = () => {
       >
         <Box 
           component={motion.div}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.3 }}
+          initial={shouldReduceMotion ? undefined : { opacity: 0 }}
+          animate={shouldReduceMotion ? undefined : { opacity: 1 }}
+          transition={shouldReduceMotion ? undefined : { duration: 0.2 }}
           sx={{ 
             p: 2, 
             display: 'flex', 
@@ -362,13 +362,13 @@ const Layout = () => {
             background: `linear-gradient(45deg, ${alpha(muiTheme.palette.primary.main, 0.1)}, ${alpha(muiTheme.palette.secondary.main, 0.1)})`,
           }}
         >
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {drawerOpen && (
               <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
+                initial={shouldReduceMotion ? undefined : { opacity: 0, x: -10 }}
+                animate={shouldReduceMotion ? undefined : { opacity: 1, x: 0 }}
+                exit={shouldReduceMotion ? undefined : { opacity: 0, x: -10 }}
+                transition={shouldReduceMotion ? undefined : { duration: 0.2 }}
               >
                 <Typography variant="h6" color="primary" fontWeight="bold">
                   MediSync
@@ -379,8 +379,8 @@ const Layout = () => {
           {isMobile && (
             <IconButton 
               component={motion.button}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={shouldReduceMotion ? undefined : { scale: 1.1 }}
+              whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
               onClick={handleDrawerToggle}
             >
               <ChevronLeftIcon />
@@ -389,88 +389,89 @@ const Layout = () => {
         </Box>
         <Divider sx={{ opacity: 0.1 }} />
         <List>
-          <AnimatePresence>
-            {menuItems.map((item, i) => {
-              const isActive = location.pathname === item.path || 
-                (item.path !== '/' && location.pathname.startsWith(item.path));
-              
-              return (
-                <motion.div
-                  key={item.text}
-                  custom={i}
-                  variants={menuItemVariants}
-                  initial="hidden"
-                  animate="visible"
-                  whileHover="hover"
-                >
-                  <ListItem disablePadding>
-                    <ListItemButton
-                      onClick={() => navigate(item.path)}
+          {menuItems.map((item, i) => {
+            const isActive = location.pathname === item.path || 
+              (item.path !== '/' && location.pathname.startsWith(item.path));
+            
+            return (
+              <motion.div
+                key={item.text}
+                custom={i}
+                variants={shouldReduceMotion ? undefined : menuItemVariants}
+                initial={shouldReduceMotion ? undefined : "hidden"}
+                animate={shouldReduceMotion ? undefined : "visible"}
+                whileHover={shouldReduceMotion ? undefined : "hover"}
+                style={{
+                  marginBottom: 4
+                }}
+              >
+                <ListItem disablePadding>
+                  <ListItemButton
+                    onClick={() => navigate(item.path)}
+                    sx={{
+                      minHeight: 48,
+                      px: 2.5,
+                      position: 'relative',
+                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                      backgroundColor: isActive ? alpha(muiTheme.palette.primary.main, 0.1) : 'transparent',
+                      borderRadius: 1,
+                      mx: 1,
+                      '&:hover': {
+                        backgroundColor: alpha(muiTheme.palette.primary.main, 0.1),
+                      },
+                      '&::before': isActive ? {
+                        content: '""',
+                        position: 'absolute',
+                        left: 0,
+                        top: 8,
+                        bottom: 8,
+                        width: 3,
+                        borderRadius: '0 4px 4px 0',
+                        backgroundColor: muiTheme.palette.primary.main,
+                      } : {},
+                    }}
+                  >
+                    <ListItemIcon
                       sx={{
-                        minHeight: 48,
-                        px: 2.5,
-                        position: 'relative',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        backgroundColor: isActive ? alpha(muiTheme.palette.primary.main, 0.1) : 'transparent',
-                        borderRadius: 1,
-                        mx: 1,
-                        '&:hover': {
-                          backgroundColor: alpha(muiTheme.palette.primary.main, 0.1),
-                        },
-                        '&::before': isActive ? {
-                          content: '""',
-                          position: 'absolute',
-                          left: 0,
-                          top: 8,
-                          bottom: 8,
-                          width: 3,
-                          borderRadius: '0 4px 4px 0',
-                          backgroundColor: muiTheme.palette.primary.main,
-                        } : {},
+                        minWidth: 0,
+                        mr: drawerOpen ? 2 : 'auto',
+                        justifyContent: 'center',
+                        color: isActive ? muiTheme.palette.primary.main : muiTheme.palette.text.primary,
+                        transition: 'color 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                       }}
                     >
-                      <ListItemIcon
-                        sx={{
-                          minWidth: 0,
-                          mr: drawerOpen ? 2 : 'auto',
-                          justifyContent: 'center',
-                          color: isActive ? muiTheme.palette.primary.main : muiTheme.palette.text.primary,
-                          transition: 'color 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
-                      >
-                        {item.icon}
-                      </ListItemIcon>
-                      <AnimatePresence>
-                        {drawerOpen && (
-                          <motion.div
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -10 }}
-                            transition={{ duration: 0.3, ease: "easeOut" }}
-                          >
-                            <ListItemText 
-                              primary={item.text}
-                              sx={{
-                                color: isActive ? muiTheme.palette.primary.main : muiTheme.palette.text.primary,
-                              }}
-                            />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </ListItemButton>
-                  </ListItem>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+                      {item.icon}
+                    </ListItemIcon>
+                    <AnimatePresence mode="wait">
+                      {drawerOpen && (
+                        <motion.div
+                          initial={shouldReduceMotion ? undefined : { opacity: 0, x: -5 }}
+                          animate={shouldReduceMotion ? undefined : { opacity: 1, x: 0 }}
+                          exit={shouldReduceMotion ? undefined : { opacity: 0, x: -5 }}
+                          transition={shouldReduceMotion ? undefined : { duration: 0.2 }}
+                        >
+                          <ListItemText 
+                            primary={item.text}
+                            sx={{
+                              color: isActive ? muiTheme.palette.primary.main : muiTheme.palette.text.primary,
+                            }}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </ListItemButton>
+                </ListItem>
+              </motion.div>
+            );
+          })}
         </List>
       </Drawer>
 
       <Box
         component={motion.div}
-        variants={contentVariants}
-        initial={isMobile ? 'mobile' : 'closed'}
-        animate={isMobile ? 'mobile' : (drawerOpen ? 'open' : 'closed')}
+        variants={shouldReduceMotion ? undefined : contentVariants}
+        initial={shouldReduceMotion ? undefined : (isMobile ? 'mobile' : 'closed')}
+        animate={shouldReduceMotion ? undefined : (isMobile ? 'mobile' : (drawerOpen ? 'open' : 'closed'))}
         onScroll={handleScroll}
         className="gpu-accelerated"
         sx={{
@@ -480,13 +481,13 @@ const Layout = () => {
           position: 'relative',
           pt: { xs: 8, sm: 9 },
           pb: 3,
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
           background: `linear-gradient(135deg, ${alpha(muiTheme.palette.background.default, 0.9)} 0%, ${alpha(muiTheme.palette.background.paper, 0.9)} 100%)`,
           backdropFilter: 'blur(8px)',
           scrollbarWidth: 'thin',
           scrollbarColor: `${alpha(muiTheme.palette.primary.main, 0.2)} transparent`,
           '&::-webkit-scrollbar': {
-            width: '8px',
+            width: '6px',
           },
           '&::-webkit-scrollbar-track': {
             background: 'transparent',
@@ -500,14 +501,18 @@ const Layout = () => {
           },
         }}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" presenceAffectsLayout={false}>
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            style={{ paddingLeft: 24, paddingRight: 24 }}
+            initial={shouldReduceMotion ? undefined : { opacity: 0, y: 5 }}
+            animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+            exit={shouldReduceMotion ? undefined : { opacity: 0, y: -5 }}
+            transition={shouldReduceMotion ? undefined : { duration: 0.2 }}
+            style={{ 
+              paddingLeft: 24, 
+              paddingRight: 24,
+              height: '100%',
+            }}
           >
             <Outlet />
           </motion.div>
@@ -547,7 +552,7 @@ const Layout = () => {
               borderLeft: `1px solid ${alpha(muiTheme.palette.divider, 0.1)}`,
             },
             '& .MuiMenuItem-root': {
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
                 backgroundColor: alpha(muiTheme.palette.primary.main, 0.1),
                 paddingLeft: '24px',
