@@ -1,31 +1,83 @@
 import { createTheme, alpha } from '@mui/material/styles';
 
-export const createCustomTheme = (mode: 'light' | 'dark') => {
+export const createCustomTheme = (mode: 'light' | 'dark', accentColor: string = '#2196f3') => {
   const isLight = mode === 'light';
 
   // Define common transition
   const smoothTransition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
   
-  // Define custom shadows
+  // Define custom shadows with the accent color
   const customShadows = {
     small: isLight 
-      ? '0px 2px 4px -1px rgba(0,0,0,0.07), 0px 1px 5px 0px rgba(0,0,0,0.05)'
-      : '0px 2px 4px -1px rgba(0,0,0,0.15), 0px 1px 5px 0px rgba(0,0,0,0.12)',
+      ? `0px 2px 4px -1px ${alpha(accentColor, 0.07)}, 0px 1px 5px 0px ${alpha(accentColor, 0.05)}`
+      : `0px 2px 4px -1px ${alpha('#000', 0.15)}, 0px 1px 5px 0px ${alpha('#000', 0.12)}`,
     medium: isLight
-      ? '0px 3px 5px -1px rgba(0,0,0,0.1), 0px 5px 8px rgba(0,0,0,0.07)'
-      : '0px 3px 5px -1px rgba(0,0,0,0.2), 0px 5px 8px rgba(0,0,0,0.14)',
+      ? `0px 3px 5px -1px ${alpha(accentColor, 0.1)}, 0px 5px 8px ${alpha(accentColor, 0.07)}`
+      : `0px 3px 5px -1px ${alpha('#000', 0.2)}, 0px 5px 8px ${alpha('#000', 0.14)}`,
     large: isLight
-      ? '0px 8px 12px -3px rgba(0,0,0,0.1), 0px 12px 20px -2px rgba(0,0,0,0.04)'
-      : '0px 8px 12px -3px rgba(0,0,0,0.3), 0px 12px 20px -2px rgba(0,0,0,0.2)',
+      ? `0px 8px 12px -3px ${alpha(accentColor, 0.1)}, 0px 12px 20px -2px ${alpha(accentColor, 0.04)}`
+      : `0px 8px 12px -3px ${alpha('#000', 0.3)}, 0px 12px 20px -2px ${alpha('#000', 0.2)}`,
   };
+
+  // Create darker and lighter versions of the accent color
+  const darken = (color: string, amount: number) => {
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result 
+        ? { 
+            r: parseInt(result[1], 16), 
+            g: parseInt(result[2], 16), 
+            b: parseInt(result[3], 16) 
+          } 
+        : null;
+    };
+    
+    const rgb = hexToRgb(color);
+    if (!rgb) return color;
+    
+    const darkerRgb = {
+      r: Math.max(0, Math.floor(rgb.r * (1 - amount))),
+      g: Math.max(0, Math.floor(rgb.g * (1 - amount))),
+      b: Math.max(0, Math.floor(rgb.b * (1 - amount)))
+    };
+    
+    return `#${darkerRgb.r.toString(16).padStart(2, '0')}${darkerRgb.g.toString(16).padStart(2, '0')}${darkerRgb.b.toString(16).padStart(2, '0')}`;
+  };
+  
+  const lighten = (color: string, amount: number) => {
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result 
+        ? { 
+            r: parseInt(result[1], 16), 
+            g: parseInt(result[2], 16), 
+            b: parseInt(result[3], 16) 
+          } 
+        : null;
+    };
+    
+    const rgb = hexToRgb(color);
+    if (!rgb) return color;
+    
+    const lighterRgb = {
+      r: Math.min(255, Math.floor(rgb.r + (255 - rgb.r) * amount)),
+      g: Math.min(255, Math.floor(rgb.g + (255 - rgb.g) * amount)),
+      b: Math.min(255, Math.floor(rgb.b + (255 - rgb.b) * amount))
+    };
+    
+    return `#${lighterRgb.r.toString(16).padStart(2, '0')}${lighterRgb.g.toString(16).padStart(2, '0')}${lighterRgb.b.toString(16).padStart(2, '0')}`;
+  };
+  
+  const accentDark = darken(accentColor, 0.15);
+  const accentLight = lighten(accentColor, 0.15);
 
   return createTheme({
     palette: {
       mode,
       primary: {
-        main: '#2196f3',
-        light: '#64b5f6',
-        dark: '#1976d2',
+        main: accentColor,
+        light: accentLight,
+        dark: accentDark,
         contrastText: '#fff',
       },
       secondary: {

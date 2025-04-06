@@ -7,21 +7,33 @@ type ThemeMode = 'light' | 'dark';
 
 interface ThemeContextType {
   mode: ThemeMode;
+  darkMode: boolean;
   toggleTheme: () => void;
   setThemeMode: (mode: ThemeMode) => void;
   isSystemTheme: boolean;
   toggleSystemTheme: () => void;
+  accentColor: string;
+  setAccentColor: (color: string) => void;
+  reduceMotion: boolean;
+  setReduceMotion: (reduce: boolean) => void;
+  setDarkMode: (isDark: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
   mode: 'light',
+  darkMode: false,
   toggleTheme: () => {},
   setThemeMode: () => {},
   isSystemTheme: true,
   toggleSystemTheme: () => {},
+  accentColor: '#2196f3',
+  setAccentColor: () => {},
+  reduceMotion: false,
+  setReduceMotion: () => {},
+  setDarkMode: () => {},
 });
 
-export const useTheme = () => useContext(ThemeContext);
+export const useThemeContext = () => useContext(ThemeContext);
 
 interface ThemeProviderProps {
   children: ReactNode;
@@ -38,7 +50,32 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     return savedPreference !== null ? savedPreference === 'true' : true;
   });
 
-  const theme = createCustomTheme(mode);
+  const [accentColor, setAccentColor] = useState<string>(() => {
+    const savedColor = localStorage.getItem('accentColor');
+    return savedColor || '#2196f3';
+  });
+
+  const [reduceMotion, setReduceMotion] = useState<boolean>(() => {
+    const savedPreference = localStorage.getItem('reduceMotion');
+    // Also check system preference if nothing saved
+    if (savedPreference === null) {
+      return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+    return savedPreference === 'true';
+  });
+
+  // Computed property for easier use in components
+  const darkMode = mode === 'dark';
+
+  // Function to directly set dark mode state
+  const setDarkMode = (isDark: boolean) => {
+    setMode(isDark ? 'dark' : 'light');
+    if (isSystemTheme) {
+      setIsSystemTheme(false);
+    }
+  };
+
+  const theme = createCustomTheme(mode, accentColor);
 
   const setThemeMode = (newMode: ThemeMode) => {
     setMode(newMode);
@@ -81,19 +118,51 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     }
   }, [isSystemTheme]);
 
+  // Check for system motion preferences
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    
+    const handleMotionPreferenceChange = (e: MediaQueryListEvent) => {
+      // Only update if user hasn't explicitly set a preference
+      if (localStorage.getItem('reduceMotion') === null) {
+        setReduceMotion(e.matches);
+      }
+    };
+    
+    mediaQuery.addEventListener('change', handleMotionPreferenceChange);
+    
+    return () => {
+      mediaQuery.removeEventListener('change', handleMotionPreferenceChange);
+    };
+  }, []);
+
   // Save preferences to localStorage
   useEffect(() => {
     localStorage.setItem('themeMode', mode);
     localStorage.setItem('useSystemTheme', String(isSystemTheme));
   }, [mode, isSystemTheme]);
 
+  useEffect(() => {
+    localStorage.setItem('accentColor', accentColor);
+  }, [accentColor]);
+
+  useEffect(() => {
+    localStorage.setItem('reduceMotion', String(reduceMotion));
+  }, [reduceMotion]);
+
   return (
     <ThemeContext.Provider value={{ 
       mode, 
+      darkMode,
       toggleTheme, 
       setThemeMode, 
       isSystemTheme, 
-      toggleSystemTheme 
+      toggleSystemTheme,
+      accentColor,
+      setAccentColor,
+      reduceMotion,
+      setReduceMotion,
+      setDarkMode
     }}>
       <MuiThemeProvider theme={theme}>
         <CssBaseline />

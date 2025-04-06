@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Box,
@@ -23,6 +23,14 @@ import {
   Tabs,
   Tab,
   Chip,
+  Container,
+  Paper,
+  Avatar,
+  InputAdornment,
+  Tooltip,
+  CardContent,
+  Select,
+  SelectChangeEvent,
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
@@ -38,7 +46,22 @@ import {
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
   Settings as SettingsIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Notifications,
+  AccessTime as AccessTimeIcon,
+  ColorLens as ColorLensIcon,
+  Check as CheckIcon,
+  Storage as StorageIcon,
+  Speed as SpeedIcon,
+  Accessibility as AccessibilityIcon,
+  MonitorHeart as MonitorHeartIcon,
 } from '@mui/icons-material';
+import { useThemeContext } from '../../contexts/ThemeContext';
+import useAuth from '../../hooks/useAuth';
+import useNotification from '../../hooks/useNotification';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -68,8 +91,10 @@ function TabPanel(props: TabPanelProps) {
 
 const Settings = () => {
   const theme = useTheme();
+  const { darkMode, setDarkMode } = useThemeContext();
+  const { user } = useAuth();
+  const { showNotification } = useNotification();
   const [activeTab, setActiveTab] = useState(0);
-  const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState({
     email: true,
     push: true,
@@ -77,13 +102,29 @@ const Settings = () => {
   });
   const [language, setLanguage] = useState('en');
   const [volume, setVolume] = useState(80);
-  const [profile, setProfile] = useState({
-    name: 'Dr. John Smith',
-    email: 'john.smith@medisync.com',
-    phone: '+1 (555) 123-4567',
-    hospital: 'Central Medical Center',
-    role: 'Emergency Physician',
+  const [profileData, setProfileData] = useState({
+    firstName: user?.firstName || 'John',
+    lastName: user?.lastName || 'Doe',
+    email: user?.email || 'john.doe@example.com',
+    phone: '(555) 123-4567',
+    title: 'Doctor',
+    department: 'Cardiology',
+    bio: 'Experienced cardiologist specializing in preventative care and heart disease management.'
   });
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [marketingEmails, setMarketingEmails] = useState(false);
+  const [fontSize, setFontSize] = useState('medium');
+  const [fontFamily, setFontFamily] = useState('Inter');
+  const [timeFormat, setTimeFormat] = useState('12h');
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [animationSpeed, setAnimationSpeed] = useState(1);
+  const [accentColor, setAccentColor] = useState('#2196f3');
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -108,8 +149,54 @@ const Settings = () => {
   };
 
   const handleSaveSettings = () => {
-    // Implement settings save logic
+    // In a real app, this would save settings to an API
+    showNotification({
+      message: 'Settings saved successfully!',
+      type: 'success'
+    });
+    
+    // Save theme settings
+    localStorage.setItem('medisync-dark-mode', darkMode.toString());
+    localStorage.setItem('medisync-language', language);
+    localStorage.setItem('medisync-font-size', fontSize);
+    localStorage.setItem('medisync-font-family', fontFamily);
+    localStorage.setItem('medisync-reduce-motion', reduceMotion.toString());
+    
+    // This effect would be handled by context in a real app
+    document.documentElement.style.setProperty('--animation-speed', `${animationSpeed}s`);
   };
+
+  const handleResetSettings = () => {
+    // Reset to defaults
+    setDarkMode(false);
+    setLanguage('en');
+    setFontSize('medium');
+    setFontFamily('Inter');
+    setTimeFormat('12h');
+    setReduceMotion(false);
+    setAnimationSpeed(1);
+    setAccentColor('#2196f3');
+
+    showNotification({
+      message: 'Settings reset to defaults',
+      type: 'info'
+    });
+  };
+
+  // Load saved settings on component mount
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('medisync-language');
+    if (savedLanguage) setLanguage(savedLanguage);
+    
+    const savedFontSize = localStorage.getItem('medisync-font-size');
+    if (savedFontSize) setFontSize(savedFontSize);
+    
+    const savedFontFamily = localStorage.getItem('medisync-font-family');
+    if (savedFontFamily) setFontFamily(savedFontFamily);
+    
+    const savedReduceMotion = localStorage.getItem('medisync-reduce-motion');
+    if (savedReduceMotion) setReduceMotion(savedReduceMotion === 'true');
+  }, []);
 
   return (
     <Box
@@ -182,41 +269,59 @@ const Settings = () => {
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
-                        label="Full Name"
-                        value={profile.name}
-                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                        label="First Name"
+                        value={profileData.firstName}
+                        onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Last Name"
+                        value={profileData.lastName}
+                        onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
                         label="Email"
-                        value={profile.email}
-                        onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                        value={profileData.email}
+                        onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
                         label="Phone"
-                        value={profile.phone}
-                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                        value={profileData.phone}
+                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
-                        label="Hospital"
-                        value={profile.hospital}
-                        onChange={(e) => setProfile({ ...profile, hospital: e.target.value })}
+                        label="Title"
+                        value={profileData.title}
+                        onChange={(e) => setProfileData({ ...profileData, title: e.target.value })}
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
-                        label="Role"
-                        value={profile.role}
-                        onChange={(e) => setProfile({ ...profile, role: e.target.value })}
+                        label="Department"
+                        value={profileData.department}
+                        onChange={(e) => setProfileData({ ...profileData, department: e.target.value })}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Bio"
+                        value={profileData.bio}
+                        onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                        multiline
+                        rows={4}
                       />
                     </Grid>
                   </Grid>
@@ -276,33 +381,328 @@ const Settings = () => {
                 <TabPanel value={activeTab} index={2}>
                   <Grid container spacing={3}>
                     <Grid item xs={12}>
-                      <Typography variant="h6" gutterBottom>Security Settings</Typography>
+                      <Typography variant="h6" fontWeight="bold" color="primary" gutterBottom>
+                        Performance & Optimization
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" paragraph>
+                        Optimize MediSync to work efficiently on your device and network conditions.
+                      </Typography>
                     </Grid>
+                    
+                    {/* Data Usage */}
+                    <Grid item xs={12} md={6}>
+                      <Card sx={{ borderRadius: 2, height: '100%' }}>
+                        <CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <StorageIcon color="primary" sx={{ mr: 1 }} />
+                            <Typography variant="h6">Data Usage</Typography>
+                          </Box>
+                          
+                          <List disablePadding>
+                            <ListItem>
+                              <ListItemText
+                                primary="Data Saver Mode"
+                                secondary="Reduce data usage by loading lower quality images and minimizing background syncing"
+                              />
+                              <Switch />
+                            </ListItem>
+                            <Divider sx={{ my: 1 }} />
+                            <ListItem>
+                              <ListItemText
+                                primary="Background Data Sync"
+                                secondary="Allow the app to sync data in the background"
+                              />
+                              <Switch defaultChecked />
+                            </ListItem>
+                            <Divider sx={{ my: 1 }} />
+                            <ListItem>
+                              <ListItemText
+                                primary="Offline Mode"
+                                secondary="Enable essential functionality when offline"
+                              />
+                              <Switch defaultChecked />
+                            </ListItem>
+                          </List>
+                          
+                          <Box sx={{ mt: 3, p: 2, borderRadius: 1, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                              Estimated Data Usage
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <Typography variant="body2">This month:</Typography>
+                              <Typography variant="body2" fontWeight="bold">24.7 MB</Typography>
+                            </Box>
+                            <Box sx={{ mt: 1, mb: 1, height: 6, bgcolor: alpha(theme.palette.primary.main, 0.1), borderRadius: 3 }}>
+                              <Box sx={{ 
+                                width: '35%', 
+                                height: '100%', 
+                                bgcolor: theme.palette.primary.main,
+                                borderRadius: 3 
+                              }} />
+                            </Box>
+                            <Typography variant="caption" color="text.secondary">
+                              35% of your 100 MB monthly limit
+                            </Typography>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    
+                    {/* Performance Options */}
+                    <Grid item xs={12} md={6}>
+                      <Card sx={{ borderRadius: 2, height: '100%' }}>
+                        <CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <SpeedIcon color="primary" sx={{ mr: 1 }} />
+                            <Typography variant="h6">Performance</Typography>
+                          </Box>
+                          
+                          <List disablePadding>
+                            <ListItem>
+                              <ListItemText
+                                primary="Hardware Acceleration"
+                                secondary="Use your device's GPU to improve performance"
+                              />
+                              <Switch defaultChecked />
+                            </ListItem>
+                            <Divider sx={{ my: 1 }} />
+                            <ListItem>
+                              <ListItemText
+                                primary="Smart Loading"
+                                secondary="Load content progressively to speed up initial page load"
+                              />
+                              <Switch defaultChecked />
+                            </ListItem>
+                            <Divider sx={{ my: 1 }} />
+                            <ListItem>
+                              <ListItemText
+                                primary="Cache Limit"
+                                secondary="Maximum space used for storing offline data"
+                              />
+                              <Select
+                                value="500"
+                                size="small"
+                                sx={{ minWidth: 120 }}
+                              >
+                                <MenuItem value="100">100 MB</MenuItem>
+                                <MenuItem value="250">250 MB</MenuItem>
+                                <MenuItem value="500">500 MB</MenuItem>
+                                <MenuItem value="1000">1 GB</MenuItem>
+                              </Select>
+                            </ListItem>
+                          </List>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    
+                    {/* Accessibility Features */}
                     <Grid item xs={12}>
-                      <List>
-                        <ListItem>
-                          <ListItemIcon>
-                            <SecurityIcon />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Two-Factor Authentication"
-                            secondary="Add an extra layer of security to your account"
-                          />
-                          <Button variant="outlined" color="primary">
-                            Enable
-                          </Button>
-                        </ListItem>
-                        <Divider sx={{ my: 2 }} />
-                        <ListItem>
-                          <ListItemText
-                            primary="Password"
-                            secondary="Last changed 30 days ago"
-                          />
-                          <Button variant="outlined">
-                            Change Password
-                          </Button>
-                        </ListItem>
-                      </List>
+                      <Card sx={{ borderRadius: 2 }}>
+                        <CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <AccessibilityIcon color="primary" sx={{ mr: 1 }} />
+                            <Typography variant="h6">Accessibility</Typography>
+                          </Box>
+                          
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} md={6}>
+                              <List disablePadding>
+                                <ListItem>
+                                  <ListItemText
+                                    primary="Screen Reader Support"
+                                    secondary="Optimize for compatibility with screen readers"
+                                  />
+                                  <Switch defaultChecked />
+                                </ListItem>
+                                <Divider sx={{ my: 1 }} />
+                                <ListItem>
+                                  <ListItemText
+                                    primary="High Contrast Mode"
+                                    secondary="Increase contrast for better visibility"
+                                  />
+                                  <Switch />
+                                </ListItem>
+                              </List>
+                            </Grid>
+                            
+                            <Grid item xs={12} md={6}>
+                              <List disablePadding>
+                                <ListItem>
+                                  <ListItemText
+                                    primary="Keyboard Navigation"
+                                    secondary="Enhanced keyboard shortcuts for navigation"
+                                  />
+                                  <Switch defaultChecked />
+                                </ListItem>
+                                <Divider sx={{ my: 1 }} />
+                                <ListItem>
+                                  <ListItemText
+                                    primary="Text-to-Speech"
+                                    secondary="Read text content aloud"
+                                  />
+                                  <Switch />
+                                </ListItem>
+                              </List>
+                            </Grid>
+                          </Grid>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    
+                    {/* Performance Monitoring */}
+                    <Grid item xs={12}>
+                      <Card sx={{ borderRadius: 2 }}>
+                        <CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <MonitorHeartIcon color="primary" sx={{ mr: 1 }} />
+                            <Typography variant="h6">Performance Monitoring</Typography>
+                          </Box>
+                          
+                          <Box sx={{ p: 2, borderRadius: 1, bgcolor: alpha(theme.palette.background.default, 0.6) }}>
+                            <Typography variant="subtitle2" gutterBottom>
+                              System Health
+                            </Typography>
+                            
+                            <Grid container spacing={2} sx={{ mb: 2 }}>
+                              <Grid item xs={4}>
+                                <Box sx={{ textAlign: 'center' }}>
+                                  <Typography variant="body2" color="text.secondary">
+                                    Response Time
+                                  </Typography>
+                                  <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    mt: 1
+                                  }}>
+                                    <Box sx={{ 
+                                      width: 48, 
+                                      height: 48, 
+                                      borderRadius: '50%', 
+                                      bgcolor: alpha(theme.palette.success.main, 0.1),
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      color: theme.palette.success.main,
+                                      border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`
+                                    }}>
+                                      <Typography variant="subtitle2">45ms</Typography>
+                                    </Box>
+                                  </Box>
+                                </Box>
+                              </Grid>
+                              
+                              <Grid item xs={4}>
+                                <Box sx={{ textAlign: 'center' }}>
+                                  <Typography variant="body2" color="text.secondary">
+                                    Memory Usage
+                                  </Typography>
+                                  <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    mt: 1
+                                  }}>
+                                    <Box sx={{ 
+                                      width: 48, 
+                                      height: 48, 
+                                      borderRadius: '50%', 
+                                      bgcolor: alpha(theme.palette.warning.main, 0.1),
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      color: theme.palette.warning.main,
+                                      border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`
+                                    }}>
+                                      <Typography variant="subtitle2">68%</Typography>
+                                    </Box>
+                                  </Box>
+                                </Box>
+                              </Grid>
+                              
+                              <Grid item xs={4}>
+                                <Box sx={{ textAlign: 'center' }}>
+                                  <Typography variant="body2" color="text.secondary">
+                                    CPU Load
+                                  </Typography>
+                                  <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    mt: 1
+                                  }}>
+                                    <Box sx={{ 
+                                      width: 48, 
+                                      height: 48, 
+                                      borderRadius: '50%', 
+                                      bgcolor: alpha(theme.palette.info.main, 0.1),
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      color: theme.palette.info.main,
+                                      border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`
+                                    }}>
+                                      <Typography variant="subtitle2">23%</Typography>
+                                    </Box>
+                                  </Box>
+                                </Box>
+                              </Grid>
+                            </Grid>
+                            
+                            <Typography variant="subtitle2" gutterBottom>
+                              Resource Trend (Last 24h)
+                            </Typography>
+                            
+                            <Box sx={{ height: 80, mt: 2, position: 'relative' }}>
+                              {/* Simplified chart mockup */}
+                              <Box sx={{ 
+                                position: 'absolute',
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'flex-end'
+                              }}>
+                                {[15, 22, 19, 30, 25, 35, 29, 36, 30, 28, 33, 24].map((value, index) => (
+                                  <Box 
+                                    key={index}
+                                    sx={{ 
+                                      height: `${value}%`,
+                                      width: '7%',
+                                      mx: '0.5%',
+                                      bgcolor: theme.palette.primary.main,
+                                      opacity: 0.7 + (index / 40),
+                                      borderTopLeftRadius: 2,
+                                      borderTopRightRadius: 2
+                                    }} 
+                                  />
+                                ))}
+                              </Box>
+                            </Box>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid item xs={12} sx={{ mt: 3, display: 'flex', gap: 2 }}>
+                      <Button 
+                        variant="contained" 
+                        color="primary" 
+                        size="large"
+                        onClick={handleSaveSettings}
+                        startIcon={<SaveIcon />}
+                      >
+                        Save Performance Settings
+                      </Button>
+                      
+                      <Button 
+                        variant="outlined"
+                        color="secondary"
+                        onClick={handleResetSettings}
+                      >
+                        Reset to Defaults
+                      </Button>
                     </Grid>
                   </Grid>
                 </TabPanel>
@@ -310,43 +710,436 @@ const Settings = () => {
                 <TabPanel value={activeTab} index={3}>
                   <Grid container spacing={3}>
                     <Grid item xs={12}>
-                      <Typography variant="h6" gutterBottom>Appearance Settings</Typography>
+                      <Typography variant="h6" fontWeight="bold" color="primary" gutterBottom>
+                        Appearance & Theme
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" paragraph>
+                        Customize how MediSync looks and feels to match your preferences.
+                      </Typography>
                     </Grid>
+                    
+                    {/* Theme Selection Cards */}
                     <Grid item xs={12}>
-                      <List>
-                        <ListItem>
-                          <ListItemIcon>
-                            {darkMode ? <DarkModeIcon /> : <LightModeIcon />}
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Dark Mode"
-                            secondary="Toggle between light and dark theme"
-                          />
-                          <Switch
-                            checked={darkMode}
-                            onChange={(e) => setDarkMode(e.target.checked)}
-                          />
-                        </ListItem>
-                        <ListItem>
-                          <ListItemIcon>
-                            <LanguageIcon />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Language"
-                            secondary="Choose your preferred language"
-                          />
-                          <TextField
-                            select
-                            value={language}
-                            onChange={(e) => setLanguage(e.target.value)}
-                            sx={{ minWidth: 150 }}
-                          >
-                            <MenuItem value="en">English</MenuItem>
-                            <MenuItem value="es">Spanish</MenuItem>
-                            <MenuItem value="fr">French</MenuItem>
-                          </TextField>
-                        </ListItem>
-                      </List>
+                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
+                        Theme Mode
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
+                        <Card 
+                          sx={{
+                            p: 2,
+                            flex: '1 1 0',
+                            borderRadius: 2,
+                            cursor: 'pointer',
+                            position: 'relative',
+                            overflow: 'visible',
+                            border: !darkMode ? `2px solid ${theme.palette.primary.main}` : `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                            transition: 'all 0.2s ease-in-out',
+                            '&:hover': {
+                              transform: 'translateY(-4px)',
+                              boxShadow: `0 8px 16px -4px ${alpha(theme.palette.common.black, 0.1)}`
+                            }
+                          }}
+                          onClick={() => setDarkMode(false)}
+                        >
+                          {!darkMode && (
+                            <Chip 
+                              size="small" 
+                              color="primary" 
+                              label="Active" 
+                              sx={{ 
+                                position: 'absolute', 
+                                top: -10, 
+                                right: 10,
+                              }}
+                            />
+                          )}
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            mb: 2,
+                            color: !darkMode ? theme.palette.primary.main : 'inherit'
+                          }}>
+                            <LightModeIcon sx={{ mr: 1 }} />
+                            <Typography variant="h6">Light Mode</Typography>
+                          </Box>
+                          <Box sx={{
+                            height: 100,
+                            mb: 2,
+                            borderRadius: 1,
+                            background: 'linear-gradient(120deg, #ffffff 0%, #f5f5f5 100%)',
+                            border: '1px solid #e0e0e0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                            <Box sx={{
+                              width: '80%',
+                              height: '70%',
+                              borderRadius: 1,
+                              display: 'flex',
+                              flexDirection: 'column',
+                            }}>
+                              <Box sx={{ 
+                                height: '20%', 
+                                bg: '#2196f3', 
+                                borderTopLeftRadius: 1,
+                                borderTopRightRadius: 1,
+                                mb: 1,
+                                backgroundColor: '#2196f3'
+                              }} />
+                              <Box sx={{ 
+                                display: 'flex', 
+                                flex: 1,
+                                gap: 1
+                              }}>
+                                <Box sx={{ width: '30%', backgroundColor: '#e0e0e0', borderRadius: 0.5 }} />
+                                <Box sx={{ 
+                                  width: '70%', 
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: 0.5
+                                }}>
+                                  <Box sx={{ height: '30%', backgroundColor: '#f0f0f0', borderRadius: 0.5 }} />
+                                  <Box sx={{ height: '30%', backgroundColor: '#f0f0f0', borderRadius: 0.5 }} />
+                                </Box>
+                              </Box>
+                            </Box>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary">
+                            Bright interface ideal for daytime use with high contrast visuals.
+                          </Typography>
+                        </Card>
+
+                        <Card 
+                          sx={{
+                            p: 2,
+                            flex: '1 1 0',
+                            borderRadius: 2,
+                            cursor: 'pointer',
+                            position: 'relative',
+                            overflow: 'visible',
+                            border: darkMode ? `2px solid ${theme.palette.primary.main}` : `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                            transition: 'all 0.2s ease-in-out',
+                            '&:hover': {
+                              transform: 'translateY(-4px)',
+                              boxShadow: `0 8px 16px -4px ${alpha(theme.palette.common.black, 0.2)}`
+                            }
+                          }}
+                          onClick={() => setDarkMode(true)}
+                        >
+                          {darkMode && (
+                            <Chip 
+                              size="small" 
+                              color="primary" 
+                              label="Active" 
+                              sx={{ 
+                                position: 'absolute', 
+                                top: -10, 
+                                right: 10,
+                              }}
+                            />
+                          )}
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            mb: 2,
+                            color: darkMode ? theme.palette.primary.main : 'inherit'
+                          }}>
+                            <DarkModeIcon sx={{ mr: 1 }} />
+                            <Typography variant="h6">Dark Mode</Typography>
+                          </Box>
+                          <Box sx={{
+                            height: 100,
+                            mb: 2,
+                            borderRadius: 1,
+                            background: 'linear-gradient(120deg, #121212 0%, #1e1e1e 100%)',
+                            border: '1px solid #333',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                            <Box sx={{
+                              width: '80%',
+                              height: '70%',
+                              borderRadius: 1,
+                              display: 'flex',
+                              flexDirection: 'column',
+                            }}>
+                              <Box sx={{ 
+                                height: '20%', 
+                                bg: '#2196f3', 
+                                borderTopLeftRadius: 1,
+                                borderTopRightRadius: 1,
+                                mb: 1,
+                                backgroundColor: '#1976d2'
+                              }} />
+                              <Box sx={{ 
+                                display: 'flex', 
+                                flex: 1,
+                                gap: 1
+                              }}>
+                                <Box sx={{ width: '30%', backgroundColor: '#333', borderRadius: 0.5 }} />
+                                <Box sx={{ 
+                                  width: '70%', 
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: 0.5
+                                }}>
+                                  <Box sx={{ height: '30%', backgroundColor: '#333', borderRadius: 0.5 }} />
+                                  <Box sx={{ height: '30%', backgroundColor: '#333', borderRadius: 0.5 }} />
+                                </Box>
+                              </Box>
+                            </Box>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary">
+                            Reduced eye strain in low-light environments and extends battery life.
+                          </Typography>
+                        </Card>
+                        
+                        <Card 
+                          sx={{
+                            p: 2,
+                            flex: '1 1 0',
+                            borderRadius: 2,
+                            cursor: 'pointer',
+                            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                            transition: 'all 0.2s ease-in-out',
+                            '&:hover': {
+                              transform: 'translateY(-4px)',
+                              boxShadow: `0 8px 16px -4px ${alpha(theme.palette.common.black, 0.15)}`
+                            }
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <SettingsIcon sx={{ mr: 1 }} />
+                            <Typography variant="h6">System Default</Typography>
+                          </Box>
+                          <Box sx={{
+                            height: 100,
+                            mb: 2,
+                            borderRadius: 1,
+                            background: 'linear-gradient(to right, #f5f5f5 50%, #121212 50%)',
+                            border: '1px solid #e0e0e0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            overflow: 'hidden',
+                            position: 'relative'
+                          }}>
+                            <Box sx={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Typography 
+                                variant="body2"
+                                color="rgba(0,0,0,0.7)"
+                                sx={{ 
+                                  position: 'absolute',
+                                  left: '25%',
+                                  transform: 'translateX(-50%)',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                Day
+                              </Typography>
+                              <Typography 
+                                variant="body2"
+                                color="rgba(255,255,255,0.9)"
+                                sx={{ 
+                                  position: 'absolute',
+                                  left: '75%',
+                                  transform: 'translateX(-50%)',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                Night
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary">
+                            Automatically follows your system's theme preference.
+                          </Typography>
+                        </Card>
+                      </Box>
+                    </Grid>
+                    
+                    {/* Color Accent */}
+                    <Grid item xs={12} sx={{ mt: 2 }}>
+                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
+                        Color Accent
+                      </Typography>
+                      <Box 
+                        sx={{ 
+                          display: 'flex', 
+                          flexWrap: 'wrap', 
+                          gap: 2,
+                          '& > *': {
+                            borderRadius: '50%',
+                            width: 48,
+                            height: 48,
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s',
+                            '&:hover': {
+                              transform: 'scale(1.1)'
+                            }
+                          }
+                        }}
+                      >
+                        <Box 
+                          sx={{ 
+                            bgcolor: '#2196f3', 
+                            border: '2px solid #fff',
+                            boxShadow: '0 0 0 2px #2196f3'
+                          }} 
+                        />
+                        <Box sx={{ bgcolor: '#f50057' }} />
+                        <Box sx={{ bgcolor: '#4caf50' }} />
+                        <Box sx={{ bgcolor: '#ff9800' }} />
+                        <Box sx={{ bgcolor: '#9c27b0' }} />
+                        <Box sx={{ bgcolor: '#607d8b' }} />
+                      </Box>
+                    </Grid>
+                    
+                    {/* Animation Settings */}
+                    <Grid item xs={12} sx={{ mt: 2 }}>
+                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
+                        Animations & Motion
+                      </Typography>
+                      <Card sx={{ p: 2, borderRadius: 2 }}>
+                        <List disablePadding>
+                          <ListItem>
+                            <ListItemText
+                              primary="Reduce Motion"
+                              secondary="Minimize animations for improved performance and reduced motion sensitivity"
+                            />
+                            <Switch />
+                          </ListItem>
+                          <Divider sx={{ my: 1 }} />
+                          <ListItem>
+                            <ListItemText
+                              primary="Animation Speed"
+                              secondary="Adjust how fast animations play in the interface"
+                            />
+                            <Box sx={{ width: 180 }}>
+                              <Stack direction="row" spacing={1} alignItems="center">
+                                <Typography variant="body2">Slow</Typography>
+                                <Box sx={{ flexGrow: 1 }}>
+                                  {/* This would be a slider component */}
+                                  <Box 
+                                    sx={{ 
+                                      height: 4, 
+                                      bgcolor: alpha(theme.palette.primary.main, 0.2), 
+                                      borderRadius: 2,
+                                      position: 'relative',
+                                      '&::after': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        height: 14,
+                                        width: 14,
+                                        top: '50%',
+                                        left: '60%',
+                                        transform: 'translate(-50%, -50%)',
+                                        bgcolor: theme.palette.primary.main,
+                                        borderRadius: '50%',
+                                      }
+                                    }} 
+                                  />
+                                </Box>
+                                <Typography variant="body2">Fast</Typography>
+                              </Stack>
+                            </Box>
+                          </ListItem>
+                        </List>
+                      </Card>
+                    </Grid>
+                    
+                    {/* Font Settings */}
+                    <Grid item xs={12} sx={{ mt: 2 }}>
+                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
+                        Typography
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
+                        <TextField
+                          select
+                          fullWidth
+                          label="Font Family"
+                          value={fontFamily}
+                          onChange={(e) => setFontFamily(e.target.value)}
+                          helperText="Select your preferred font for the interface"
+                        >
+                          <MenuItem value="Inter">Inter</MenuItem>
+                          <MenuItem value="Roboto">Roboto</MenuItem>
+                          <MenuItem value="Open Sans">Open Sans</MenuItem>
+                        </TextField>
+                        
+                        <TextField
+                          select
+                          fullWidth
+                          label="Font Size"
+                          value={fontSize}
+                          onChange={(e) => setFontSize(e.target.value)}
+                          helperText="Adjust the text size across the application"
+                        >
+                          <MenuItem value="small">Small</MenuItem>
+                          <MenuItem value="medium">Medium</MenuItem>
+                          <MenuItem value="large">Large</MenuItem>
+                        </TextField>
+                      </Box>
+                    </Grid>
+                    
+                    {/* Language Settings */}
+                    <Grid item xs={12} sx={{ mt: 2 }}>
+                      <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>
+                        Language & Region
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
+                        <TextField
+                          select
+                          fullWidth
+                          label="Language"
+                          value={language}
+                          onChange={(e) => setLanguage(e.target.value)}
+                          helperText="Choose your preferred language"
+                        >
+                          <MenuItem value="en">English (United States)</MenuItem>
+                          <MenuItem value="en-gb">English (United Kingdom)</MenuItem>
+                          <MenuItem value="es">Español (Spanish)</MenuItem>
+                          <MenuItem value="fr">Français (French)</MenuItem>
+                          <MenuItem value="de">Deutsch (German)</MenuItem>
+                          <MenuItem value="zh">中文 (Chinese)</MenuItem>
+                          <MenuItem value="jp">日本語 (Japanese)</MenuItem>
+                        </TextField>
+                        
+                        <TextField
+                          select
+                          fullWidth
+                          label="Time Format"
+                          value={timeFormat}
+                          onChange={(e) => setTimeFormat(e.target.value)}
+                          helperText="Choose how time is displayed"
+                        >
+                          <MenuItem value="12h">12-hour (1:30 PM)</MenuItem>
+                          <MenuItem value="24h">24-hour (13:30)</MenuItem>
+                        </TextField>
+                      </Box>
+                    </Grid>
+                    
+                    <Grid item xs={12} sx={{ mt: 3 }}>
+                      <Button 
+                        variant="contained" 
+                        color="primary" 
+                        size="large"
+                        onClick={handleSaveSettings}
+                        startIcon={<SaveIcon />}
+                      >
+                        Save Appearance Settings
+                      </Button>
                     </Grid>
                   </Grid>
                 </TabPanel>
