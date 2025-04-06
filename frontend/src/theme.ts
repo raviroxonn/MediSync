@@ -3,6 +3,22 @@ import { createTheme, alpha } from '@mui/material/styles';
 const createCustomTheme = (mode: 'light' | 'dark') => {
   const isLight = mode === 'light';
 
+  // Define common transition
+  const smoothTransition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+  
+  // Define custom shadows
+  const customShadows = {
+    small: isLight 
+      ? '0px 2px 4px -1px rgba(0,0,0,0.07), 0px 1px 5px 0px rgba(0,0,0,0.05)'
+      : '0px 2px 4px -1px rgba(0,0,0,0.15), 0px 1px 5px 0px rgba(0,0,0,0.12)',
+    medium: isLight
+      ? '0px 3px 5px -1px rgba(0,0,0,0.1), 0px 5px 8px rgba(0,0,0,0.07)'
+      : '0px 3px 5px -1px rgba(0,0,0,0.2), 0px 5px 8px rgba(0,0,0,0.14)',
+    large: isLight
+      ? '0px 8px 12px -3px rgba(0,0,0,0.1), 0px 12px 20px -2px rgba(0,0,0,0.04)'
+      : '0px 8px 12px -3px rgba(0,0,0,0.3), 0px 12px 20px -2px rgba(0,0,0,0.2)',
+  };
+
   return createTheme({
     palette: {
       mode,
@@ -62,53 +78,64 @@ const createCustomTheme = (mode: 'light' | 'dark') => {
         fontSize: '2.5rem',
         fontWeight: 600,
         lineHeight: 1.2,
+        letterSpacing: '-0.01562em',
       },
       h2: {
         fontSize: '2rem',
         fontWeight: 600,
         lineHeight: 1.3,
+        letterSpacing: '-0.00833em',
       },
       h3: {
         fontSize: '1.75rem',
         fontWeight: 600,
         lineHeight: 1.3,
+        letterSpacing: '0em',
       },
       h4: {
         fontSize: '1.5rem',
         fontWeight: 600,
         lineHeight: 1.4,
+        letterSpacing: '0.00735em',
       },
       h5: {
         fontSize: '1.25rem',
         fontWeight: 600,
         lineHeight: 1.4,
+        letterSpacing: '0em',
       },
       h6: {
         fontSize: '1rem',
         fontWeight: 600,
         lineHeight: 1.4,
+        letterSpacing: '0.0075em',
       },
       subtitle1: {
         fontSize: '1rem',
         fontWeight: 500,
         lineHeight: 1.5,
+        letterSpacing: '0.00938em',
       },
       subtitle2: {
         fontSize: '0.875rem',
         fontWeight: 500,
         lineHeight: 1.57,
+        letterSpacing: '0.00714em',
       },
       body1: {
         fontSize: '1rem',
         lineHeight: 1.5,
+        letterSpacing: '0.00938em',
       },
       body2: {
         fontSize: '0.875rem',
         lineHeight: 1.43,
+        letterSpacing: '0.01071em',
       },
       button: {
         textTransform: 'none',
         fontWeight: 500,
+        letterSpacing: '0.02857em',
       },
     },
     shape: {
@@ -136,6 +163,7 @@ const createCustomTheme = (mode: 'light' | 'dark') => {
             flexDirection: 'column',
             minHeight: '100%',
             width: '100%',
+            transition: smoothTransition,
           },
           '#root': {
             display: 'flex',
@@ -144,15 +172,55 @@ const createCustomTheme = (mode: 'light' | 'dark') => {
             height: '100%',
             width: '100%',
           },
+          ':focus-visible': {
+            outline: `2px solid ${alpha('#2196f3', 0.5)}`,
+            outlineOffset: '2px',
+          },
+          '::selection': {
+            backgroundColor: alpha('#2196f3', 0.3),
+          },
         },
       },
       MuiCard: {
         styleOverrides: {
           root: {
             borderRadius: 12,
-            boxShadow: mode === 'dark'
-              ? '0 0 1px 0 rgba(0,0,0, 0.70), 0 11px 20px -8px rgba(0,0,0, 0.50)'
-              : '0 0 1px 0 rgba(0,0,0, 0.31), 0 12px 22px -8px rgba(0,0,0, 0.25)',
+            boxShadow: customShadows.medium,
+            transition: smoothTransition,
+            overflow: 'hidden',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: customShadows.large,
+            },
+          },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundImage: 'none',
+            transition: smoothTransition,
+          },
+          elevation1: {
+            boxShadow: customShadows.small,
+          },
+          elevation2: {
+            boxShadow: customShadows.small,
+          },
+          elevation4: {
+            boxShadow: customShadows.medium,
+          },
+          elevation8: {
+            boxShadow: customShadows.medium,
+          },
+          elevation12: {
+            boxShadow: customShadows.large,
+          },
+          elevation16: {
+            boxShadow: customShadows.large,
+          },
+          elevation24: {
+            boxShadow: customShadows.large,
           },
         },
       },
@@ -162,17 +230,25 @@ const createCustomTheme = (mode: 'light' | 'dark') => {
             borderRadius: 8,
             textTransform: 'none',
             fontWeight: 500,
+            transition: smoothTransition,
             '&:hover': {
               transform: 'translateY(-1px)',
-              boxShadow: mode === 'dark'
-                ? '0 4px 12px rgba(0,0,0, 0.5)'
-                : '0 4px 12px rgba(0,0,0, 0.15)',
+              boxShadow: customShadows.small,
+            },
+            '&:active': {
+              transform: 'translateY(0)',
             },
           },
           contained: {
-            boxShadow: mode === 'dark'
-              ? '0 2px 6px rgba(0,0,0, 0.4)'
-              : '0 2px 6px rgba(0,0,0, 0.1)',
+            boxShadow: customShadows.small,
+            '&:hover': {
+              boxShadow: customShadows.medium,
+            },
+          },
+          outlined: {
+            '&:hover': {
+              backgroundColor: alpha('#2196f3', 0.04),
+            },
           },
         },
       },
@@ -181,13 +257,16 @@ const createCustomTheme = (mode: 'light' | 'dark') => {
           root: {
             '& .MuiOutlinedInput-root': {
               borderRadius: 8,
-              transition: 'all 0.2s ease-in-out',
+              transition: smoothTransition,
               '&:hover': {
                 transform: 'translateY(-1px)',
               },
               '&.Mui-focused': {
                 boxShadow: `0 0 0 2px ${alpha('#2196f3', 0.2)}`,
               },
+            },
+            '& .MuiInputLabel-root': {
+              transition: smoothTransition,
             },
           },
         },
@@ -197,7 +276,16 @@ const createCustomTheme = (mode: 'light' | 'dark') => {
           root: {
             borderRadius: 8,
             margin: '4px 8px',
-            transition: 'all 0.2s ease-in-out',
+            transition: smoothTransition,
+            '&:hover': {
+              backgroundColor: alpha(isLight ? '#000' : '#fff', 0.04),
+            },
+            '&.Mui-selected': {
+              backgroundColor: alpha('#2196f3', 0.12),
+              '&:hover': {
+                backgroundColor: alpha('#2196f3', 0.16),
+              },
+            },
           },
         },
       },
@@ -205,8 +293,10 @@ const createCustomTheme = (mode: 'light' | 'dark') => {
         styleOverrides: {
           root: {
             borderRadius: 8,
+            transition: smoothTransition,
             '&:hover': {
               transform: 'translateY(-1px)',
+              boxShadow: customShadows.small,
             },
           },
         },
@@ -219,9 +309,67 @@ const createCustomTheme = (mode: 'light' | 'dark') => {
             color: mode === 'dark' ? '#fff' : '#000',
             fontSize: '0.75rem',
             borderRadius: 4,
-            boxShadow: mode === 'dark'
-              ? '0 2px 8px rgba(0,0,0, 0.5)'
-              : '0 2px 8px rgba(0,0,0, 0.15)',
+            boxShadow: customShadows.medium,
+            transition: smoothTransition,
+            maxWidth: 300,
+            padding: '8px 12px',
+          },
+          arrow: {
+            color: alpha(mode === 'dark' ? '#000' : '#fff', 0.8),
+          },
+        },
+      },
+      MuiBackdrop: {
+        styleOverrides: {
+          root: {
+            backgroundColor: alpha(mode === 'dark' ? '#000' : '#000', isLight ? 0.5 : 0.7),
+            backdropFilter: 'blur(4px)',
+          },
+        },
+      },
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            borderRadius: 12,
+            boxShadow: customShadows.large,
+          },
+        },
+      },
+      MuiDivider: {
+        styleOverrides: {
+          root: {
+            opacity: 0.7,
+          },
+        },
+      },
+      MuiLink: {
+        styleOverrides: {
+          root: {
+            textDecoration: 'none',
+            transition: smoothTransition,
+            '&:hover': {
+              textDecoration: 'none',
+            },
+          },
+        },
+      },
+      MuiSwitch: {
+        styleOverrides: {
+          root: {
+            transition: smoothTransition,
+          },
+          thumb: {
+            transition: smoothTransition,
+          },
+          track: {
+            transition: smoothTransition,
+          },
+        },
+      },
+      MuiCircularProgress: {
+        styleOverrides: {
+          root: {
+            transition: smoothTransition,
           },
         },
       },

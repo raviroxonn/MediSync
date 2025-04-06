@@ -39,7 +39,7 @@ import {
   Person as PersonIcon,
   DirectionsRun,
 } from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -55,6 +55,101 @@ const menuItems = [
   { text: 'Settings', icon: <Settings />, path: '/settings' },
 ];
 
+// Animation variants
+const drawerVariants: Variants = {
+  open: {
+    width: drawerWidth,
+    transition: { 
+      duration: 0.3,
+      type: "spring",
+      stiffness: 500,
+      damping: 40
+    }
+  },
+  closed: {
+    width: 72,
+    transition: { 
+      duration: 0.3,
+      type: "spring",
+      stiffness: 500,
+      damping: 40
+    }
+  },
+  mobile: {
+    width: drawerWidth,
+    x: 0,
+    transition: { 
+      duration: 0.3,
+      type: "spring",
+      stiffness: 500,
+      damping: 40
+    }
+  },
+  mobileClosed: {
+    width: drawerWidth,
+    x: -drawerWidth,
+    transition: { 
+      duration: 0.3,
+      type: "spring",
+      stiffness: 500,
+      damping: 40
+    }
+  }
+};
+
+const contentVariants: Variants = {
+  open: {
+    marginLeft: drawerWidth,
+    width: `calc(100% - ${drawerWidth}px)`,
+    transition: { 
+      duration: 0.3,
+      type: "spring",
+      stiffness: 500,
+      damping: 40
+    }
+  },
+  closed: {
+    marginLeft: 72,
+    width: `calc(100% - 72px)`,
+    transition: { 
+      duration: 0.3,
+      type: "spring",
+      stiffness: 500,
+      damping: 40
+    }
+  },
+  mobile: {
+    marginLeft: 0,
+    width: '100%',
+    transition: { 
+      duration: 0.3
+    }
+  }
+};
+
+const menuItemVariants: Variants = {
+  hidden: { 
+    opacity: 0, 
+    x: -20 
+  },
+  visible: (i: number) => ({ 
+    opacity: 1, 
+    x: 0,
+    transition: { 
+      delay: i * 0.05,
+      duration: 0.3,
+      ease: "easeOut"
+    }
+  }),
+  hover: {
+    x: 6,
+    transition: { 
+      duration: 0.2, 
+      ease: "easeOut" 
+    }
+  }
+};
+
 const Layout = () => {
   const muiTheme = useMuiTheme();
   const navigate = useNavigate();
@@ -66,6 +161,8 @@ const Layout = () => {
   const { notifications, showNotification, requestPermission } = useNotification();
   const { user, logout } = useAuth();
   const notificationCount = notifications.length;
+  
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     if (isMobile) {
@@ -93,6 +190,15 @@ const Layout = () => {
     return () => clearTimeout(timer);
   }, [showNotification, requestPermission]);
 
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const scrollTop = e.currentTarget.scrollTop;
+    if (scrollTop > 20 && !scrolled) {
+      setScrolled(true);
+    } else if (scrollTop <= 20 && scrolled) {
+      setScrolled(false);
+    }
+  };
+
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
   };
@@ -118,67 +224,52 @@ const Layout = () => {
     handleProfileMenuClose();
   };
 
-  const drawerVariants = {
-    open: {
-      width: drawerWidth,
-      transition: { 
-        duration: 0.3,
-        ease: "easeInOut"
-      }
-    },
-    closed: {
-      width: isMobile ? 0 : 72,
-      transition: { 
-        duration: 0.3,
-        ease: "easeInOut"
-      }
-    }
-  };
-
-  const contentVariants = {
-    open: {
-      marginLeft: isMobile ? 0 : drawerWidth,
-      transition: { 
-        duration: 0.3,
-        ease: "easeInOut"
-      }
-    },
-    closed: {
-      marginLeft: isMobile ? 0 : 72,
-      transition: { 
-        duration: 0.3,
-        ease: "easeInOut"
-      }
-    }
-  };
-
   return (
     <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       <AppBar
+        component={motion.div}
+        initial={{ y: -70 }}
+        animate={{ y: 0 }}
+        transition={{ 
+          type: "spring",
+          stiffness: 500,
+          damping: 30
+        }}
         position="fixed"
         elevation={0}
         sx={{
-          width: { md: `calc(100% - ${drawerOpen ? drawerWidth : 72}px)` },
-          ml: { md: `${drawerOpen ? drawerWidth : 72}px` },
-          transition: 'all 0.3s ease',
+          width: { 
+            xs: '100%', 
+            md: `calc(100% - ${drawerOpen ? drawerWidth : 72}px)` 
+          },
+          ml: { 
+            xs: 0, 
+            md: `${drawerOpen ? drawerWidth : 72}px` 
+          },
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           backdropFilter: 'blur(10px)',
-          backgroundColor: alpha(muiTheme.palette.background.default, 0.7),
-          borderBottom: `1px solid ${alpha(muiTheme.palette.divider, 0.1)}`,
+          backgroundColor: alpha(
+            muiTheme.palette.background.default, 
+            scrolled ? 0.9 : 0.7
+          ),
+          borderBottom: `1px solid ${alpha(muiTheme.palette.divider, scrolled ? 0.2 : 0.1)}`,
+          boxShadow: scrolled 
+            ? `0 4px 20px -4px ${alpha(muiTheme.palette.common.black, 0.1)}` 
+            : 'none',
           zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
       >
         <Toolbar>
           <IconButton
+            component={motion.button}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
             color="inherit"
             edge="start"
             onClick={handleDrawerToggle}
             sx={{ 
               mr: 2, 
               display: { md: 'none' },
-              '&:hover': {
-                transform: 'scale(1.1)',
-                transition: 'transform 0.2s ease'
-              }
             }}
           >
             <MenuIcon />
@@ -186,28 +277,22 @@ const Layout = () => {
           <Box sx={{ flexGrow: 1 }} />
           <Tooltip title={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
             <IconButton 
+              component={motion.button}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               onClick={toggleTheme} 
-              sx={{ 
-                mr: 2,
-                transition: 'transform 0.2s ease',
-                '&:hover': {
-                  transform: 'scale(1.1)',
-                }
-              }}
+              sx={{ mr: 2 }}
             >
               {mode === 'dark' ? <LightMode /> : <DarkMode />}
             </IconButton>
           </Tooltip>
           <Tooltip title="Notifications">
             <IconButton 
+              component={motion.button}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleNotificationClick}
-              sx={{ 
-                mr: 2,
-                transition: 'transform 0.2s ease',
-                '&:hover': {
-                  transform: 'scale(1.1)',
-                }
-              }}
+              sx={{ mr: 2 }}
             >
               <Badge 
                 badgeContent={notificationCount} 
@@ -219,15 +304,13 @@ const Layout = () => {
           </Tooltip>
           <Tooltip title="Profile">
             <IconButton
+              component={motion.button}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleProfileMenuOpen}
               sx={{
                 padding: 0.5,
                 border: `2px solid ${muiTheme.palette.primary.main}`,
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  transform: 'scale(1.1)',
-                  backgroundColor: alpha(muiTheme.palette.primary.main, 0.1),
-                },
               }}
             >
               <Avatar 
@@ -251,20 +334,26 @@ const Layout = () => {
         PaperProps={{
           component: motion.div,
           variants: drawerVariants,
-          animate: drawerOpen ? 'open' : 'closed',
+          initial: isMobile ? 'mobileClosed' : 'closed',
+          animate: isMobile 
+            ? (drawerOpen ? 'mobile' : 'mobileClosed') 
+            : (drawerOpen ? 'open' : 'closed'),
           sx: {
-            backgroundColor: muiTheme.palette.mode === 'dark' 
-              ? alpha(muiTheme.palette.background.paper, 0.8) 
-              : muiTheme.palette.background.paper,
+            backgroundColor: alpha(muiTheme.palette.background.paper, 0.9),
             backdropFilter: 'blur(10px)',
             borderRight: `1px solid ${alpha(muiTheme.palette.divider, 0.1)}`,
             overflow: 'hidden',
             height: '100%',
+            boxShadow: isMobile ? `4px 0 25px ${alpha(muiTheme.palette.common.black, 0.15)}` : 'none',
             position: 'fixed',
           },
         }}
       >
         <Box 
+          component={motion.div}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.3 }}
           sx={{ 
             p: 2, 
             display: 'flex', 
@@ -279,7 +368,7 @@ const Layout = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
               >
                 <Typography variant="h6" color="primary" fontWeight="bold">
                   MediSync
@@ -289,13 +378,10 @@ const Layout = () => {
           </AnimatePresence>
           {isMobile && (
             <IconButton 
+              component={motion.button}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleDrawerToggle}
-              sx={{
-                '&:hover': {
-                  transform: 'scale(1.1)',
-                  transition: 'transform 0.2s ease'
-                }
-              }}
             >
               <ChevronLeftIcon />
             </IconButton>
@@ -303,94 +389,129 @@ const Layout = () => {
         </Box>
         <Divider sx={{ opacity: 0.1 }} />
         <List>
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path || 
-              (item.path !== '/' && location.pathname.startsWith(item.path));
-            
-            return (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton
-                  onClick={() => navigate(item.path)}
-                  sx={{
-                    minHeight: 48,
-                    px: 2.5,
-                    position: 'relative',
-                    transition: 'all 0.2s ease',
-                    backgroundColor: isActive ? alpha(muiTheme.palette.primary.main, 0.1) : 'transparent',
-                    '&:hover': {
-                      backgroundColor: alpha(muiTheme.palette.primary.main, 0.1),
-                      transform: 'translateX(6px)',
-                    },
-                    '&::before': isActive ? {
-                      content: '""',
-                      position: 'absolute',
-                      left: 0,
-                      top: 8,
-                      bottom: 8,
-                      width: 3,
-                      borderRadius: '0 4px 4px 0',
-                      backgroundColor: muiTheme.palette.primary.main,
-                    } : {},
-                  }}
+          <AnimatePresence>
+            {menuItems.map((item, i) => {
+              const isActive = location.pathname === item.path || 
+                (item.path !== '/' && location.pathname.startsWith(item.path));
+              
+              return (
+                <motion.div
+                  key={item.text}
+                  custom={i}
+                  variants={menuItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  whileHover="hover"
                 >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 0,
-                      mr: drawerOpen ? 2 : 'auto',
-                      justifyContent: 'center',
-                      color: isActive ? muiTheme.palette.primary.main : muiTheme.palette.text.primary,
-                      transition: 'color 0.2s ease',
-                    }}
-                  >
-                    {item.icon}
-                  </ListItemIcon>
-                  <AnimatePresence>
-                    {drawerOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
-                        transition={{ duration: 0.2 }}
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      onClick={() => navigate(item.path)}
+                      sx={{
+                        minHeight: 48,
+                        px: 2.5,
+                        position: 'relative',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        backgroundColor: isActive ? alpha(muiTheme.palette.primary.main, 0.1) : 'transparent',
+                        borderRadius: 1,
+                        mx: 1,
+                        '&:hover': {
+                          backgroundColor: alpha(muiTheme.palette.primary.main, 0.1),
+                        },
+                        '&::before': isActive ? {
+                          content: '""',
+                          position: 'absolute',
+                          left: 0,
+                          top: 8,
+                          bottom: 8,
+                          width: 3,
+                          borderRadius: '0 4px 4px 0',
+                          backgroundColor: muiTheme.palette.primary.main,
+                        } : {},
+                      }}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 0,
+                          mr: drawerOpen ? 2 : 'auto',
+                          justifyContent: 'center',
+                          color: isActive ? muiTheme.palette.primary.main : muiTheme.palette.text.primary,
+                          transition: 'color 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
                       >
-                        <ListItemText 
-                          primary={item.text}
-                          sx={{
-                            color: isActive ? muiTheme.palette.primary.main : muiTheme.palette.text.primary,
-                          }}
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </ListItemButton>
-              </ListItem>
-            );
-          })}
+                        {item.icon}
+                      </ListItemIcon>
+                      <AnimatePresence>
+                        {drawerOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                          >
+                            <ListItemText 
+                              primary={item.text}
+                              sx={{
+                                color: isActive ? muiTheme.palette.primary.main : muiTheme.palette.text.primary,
+                              }}
+                            />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </ListItemButton>
+                  </ListItem>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </List>
       </Drawer>
 
       <Box
         component={motion.div}
         variants={contentVariants}
-        animate={drawerOpen ? 'open' : 'closed'}
+        initial={isMobile ? 'mobile' : 'closed'}
+        animate={isMobile ? 'mobile' : (drawerOpen ? 'open' : 'closed')}
+        onScroll={handleScroll}
+        className="gpu-accelerated"
         sx={{
           flexGrow: 1,
           height: '100vh',
           overflow: 'auto',
           position: 'relative',
           pt: { xs: 8, sm: 9 },
-          px: 3,
           pb: 3,
-          transition: 'all 0.3s ease',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           background: `linear-gradient(135deg, ${alpha(muiTheme.palette.background.default, 0.9)} 0%, ${alpha(muiTheme.palette.background.paper, 0.9)} 100%)`,
-          backdropFilter: 'blur(10px)',
-          marginLeft: { md: `${drawerOpen ? drawerWidth : 72}px` },
-          width: {
-            xs: '100%',
-            md: `calc(100% - ${drawerOpen ? drawerWidth : 72}px)`,
+          backdropFilter: 'blur(8px)',
+          scrollbarWidth: 'thin',
+          scrollbarColor: `${alpha(muiTheme.palette.primary.main, 0.2)} transparent`,
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: alpha(muiTheme.palette.primary.main, 0.2),
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: alpha(muiTheme.palette.primary.main, 0.3),
           },
         }}
       >
-        <Outlet />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            style={{ paddingLeft: 24, paddingRight: 24 }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </Box>
 
       <Menu
@@ -404,15 +525,32 @@ const Layout = () => {
           sx: {
             mt: 1,
             minWidth: 200,
+            overflow: 'visible',
+            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
             backdropFilter: 'blur(10px)',
-            backgroundColor: alpha(muiTheme.palette.background.paper, 0.8),
+            backgroundColor: alpha(muiTheme.palette.background.paper, 0.9),
             border: `1px solid ${alpha(muiTheme.palette.divider, 0.1)}`,
             borderRadius: 2,
+            '&:before': {
+              content: '""',
+              display: 'block',
+              position: 'absolute',
+              top: 0,
+              right: 14,
+              width: 10,
+              height: 10,
+              bgcolor: alpha(muiTheme.palette.background.paper, 0.9),
+              backdropFilter: 'blur(10px)',
+              transform: 'translateY(-50%) rotate(45deg)',
+              zIndex: 0,
+              borderTop: `1px solid ${alpha(muiTheme.palette.divider, 0.1)}`,
+              borderLeft: `1px solid ${alpha(muiTheme.palette.divider, 0.1)}`,
+            },
             '& .MuiMenuItem-root': {
-              transition: 'all 0.2s ease',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
                 backgroundColor: alpha(muiTheme.palette.primary.main, 0.1),
-                transform: 'translateX(6px)',
+                paddingLeft: '24px',
               },
             },
           },

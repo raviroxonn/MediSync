@@ -72,7 +72,7 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import StatCard from '../../components/common/StatCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -90,6 +90,67 @@ ChartJS.register(
   Legend,
   Filler
 );
+
+// Animation variants
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      when: "beforeChildren",
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 24
+    }
+  }
+};
+
+const cardVariants: Variants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 24
+    }
+  },
+  hover: {
+    y: -10,
+    boxShadow: "0px 10px 25px rgba(0, 0, 0, 0.1)",
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 10
+    }
+  }
+};
+
+const chartVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      delay: 0.2,
+      duration: 0.5,
+      ease: "easeOut"
+    }
+  }
+};
 
 // Custom styles
 const styles = {
@@ -283,29 +344,52 @@ const Dashboard = () => {
   return (
     <Box
       component={motion.div}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="gpu-accelerated"
       sx={{
         p: 3,
         minHeight: '100vh',
         background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, ${alpha(theme.palette.background.default, 0.95)} 100%)`,
+        overflow: 'hidden',
       }}
     >
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" fontWeight="bold" color="primary">
+      <Stack 
+        component={motion.div}
+        variants={itemVariants}
+        direction="row" 
+        justifyContent="space-between" 
+        alignItems="center" 
+        mb={3}
+      >
+        <Typography 
+          component={motion.h1}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          variant="h4" 
+          fontWeight="bold" 
+          color="primary"
+        >
           Emergency Response Dashboard
         </Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack 
+          component={motion.div}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          direction="row" 
+          spacing={2} 
+          alignItems="center"
+        >
           <Tooltip title="Notifications">
             <IconButton 
+              component={motion.button}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleNotificationClick}
               color="primary"
-              sx={{
-                transition: 'transform 0.2s ease',
-                '&:hover': {
-                  transform: 'scale(1.1)',
-                }
-              }}
             >
               <Badge 
                 badgeContent={notificationCount} 
@@ -317,6 +401,9 @@ const Dashboard = () => {
           </Tooltip>
           <Tooltip title="Refresh Data">
             <IconButton 
+              component={motion.button}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleRefresh} 
               color="primary"
               disabled={isLoading || isPending}
@@ -338,74 +425,93 @@ const Dashboard = () => {
           </Box>
         }>
           {/* Stats Cards */}
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Active Emergencies"
-              value={stats.activeEmergencies}
-              icon={<EmergencyIcon />}
-              color="error"
-              trend={{ value: 8, isPositive: false }}
-              loading={isPending}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Available Teams"
-              value={stats.availableTeams}
-              icon={<DirectionsRun />}
-              color="success"
-              trend={{ value: 2, isPositive: true }}
-              loading={isPending}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Avg. Response Time"
-              value={`${stats.avgResponseTime}m`}
-              icon={<TimeIcon />}
-              color="warning"
-              trend={{ value: 12, isPositive: true }}
-              loading={isPending}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Success Rate"
-              value={`${stats.successRate}%`}
-              icon={<CheckCircleIcon />}
-              color="info"
-              trend={{ value: 5, isPositive: true }}
-              loading={isPending}
-            />
-          </Grid>
+          <AnimatePresence>
+            <Grid item xs={12} sm={6} md={3} component={motion.div} variants={itemVariants}>
+              <motion.div whileHover="hover" variants={cardVariants}>
+                <StatCard
+                  title="Active Emergencies"
+                  value={stats.activeEmergencies}
+                  icon={<EmergencyIcon />}
+                  color="error"
+                  trend={{ value: 8, isPositive: false }}
+                  loading={isPending}
+                />
+              </motion.div>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3} component={motion.div} variants={itemVariants}>
+              <motion.div whileHover="hover" variants={cardVariants}>
+                <StatCard
+                  title="Available Teams"
+                  value={stats.availableTeams}
+                  icon={<DirectionsRun />}
+                  color="success"
+                  trend={{ value: 2, isPositive: true }}
+                  loading={isPending}
+                />
+              </motion.div>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3} component={motion.div} variants={itemVariants}>
+              <motion.div whileHover="hover" variants={cardVariants}>
+                <StatCard
+                  title="Avg. Response Time"
+                  value={`${stats.avgResponseTime}m`}
+                  icon={<TimeIcon />}
+                  color="warning"
+                  trend={{ value: 12, isPositive: true }}
+                  loading={isPending}
+                />
+              </motion.div>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3} component={motion.div} variants={itemVariants}>
+              <motion.div whileHover="hover" variants={cardVariants}>
+                <StatCard
+                  title="Success Rate"
+                  value={`${stats.successRate}%`}
+                  icon={<CheckCircleIcon />}
+                  color="info"
+                  trend={{ value: 5, isPositive: true }}
+                  loading={isPending}
+                />
+              </motion.div>
+            </Grid>
+          </AnimatePresence>
 
           {/* Main Content */}
-          <Grid item xs={12} md={8}>
+          <Grid item xs={12} md={8} component={motion.div} variants={itemVariants}>
             <Card
               component={motion.div}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              whileHover="hover"
               sx={{
                 p: 3,
                 height: '100%',
                 background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.95)} 0%, ${alpha(theme.palette.background.paper, 0.9)} 100%)`,
                 backdropFilter: 'blur(10px)',
                 border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                overflow: 'hidden',
               }}
             >
               <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
                 <Typography variant="h6">Response Time Trends</Typography>
                 <Stack direction="row" spacing={1}>
-                  {['24h', '7d', '30d'].map((range) => (
-                    <Button
+                  {['24h', '7d', '30d'].map((range, index) => (
+                    <motion.div
                       key={range}
-                      size="small"
-                      variant={timeRange === range ? 'contained' : 'outlined'}
-                      onClick={() => handleTimeRangeChange(range)}
-                      disabled={isPending}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 * index }}
                     >
-                      {range}
-                    </Button>
+                      <Button
+                        size="small"
+                        variant={timeRange === range ? 'contained' : 'outlined'}
+                        onClick={() => handleTimeRangeChange(range)}
+                        disabled={isPending}
+                      >
+                        {range}
+                      </Button>
+                    </motion.div>
                   ))}
                 </Stack>
               </Stack>
@@ -428,39 +534,54 @@ const Dashboard = () => {
                     <CircularProgress />
                   </Box>
                 )}
-                <Line
-                  data={responseTimeData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        display: false,
-                      },
-                    },
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                        grid: {
-                          display: true,
-                          color: alpha(theme.palette.divider, 0.1),
-                        },
-                      },
-                      x: {
-                        grid: {
+                <motion.div
+                  variants={chartVariants}
+                  initial="hidden"
+                  animate="visible"
+                  style={{ height: '100%' }}
+                >
+                  <Line
+                    data={responseTimeData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
                           display: false,
                         },
                       },
-                    },
-                  }}
-                />
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            display: true,
+                            color: alpha(theme.palette.divider, 0.1),
+                          },
+                        },
+                        x: {
+                          grid: {
+                            display: false,
+                          },
+                        },
+                      },
+                      animation: {
+                        duration: 1500,
+                      },
+                    }}
+                  />
+                </motion.div>
               </Box>
             </Card>
           </Grid>
 
           {/* Emergency Types */}
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={4} component={motion.div} variants={itemVariants}>
             <Card
+              component={motion.div}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              whileHover="hover"
               sx={{
                 p: 3,
                 height: '100%',
@@ -468,6 +589,7 @@ const Dashboard = () => {
                 backdropFilter: 'blur(10px)',
                 border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
                 position: 'relative',
+                overflow: 'hidden',
               }}
             >
               <Typography variant="h6" mb={3}>Emergency Distribution</Typography>
@@ -490,19 +612,30 @@ const Dashboard = () => {
                 </Box>
               )}
               <Box sx={{ height: 300, display: 'flex', justifyContent: 'center' }}>
-                <Doughnut
-                  data={emergencyTypeData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
+                <motion.div
+                  variants={chartVariants}
+                  initial="hidden"
+                  animate="visible"
+                  style={{ height: '100%', width: '100%' }}
+                >
+                  <Doughnut
+                    data={emergencyTypeData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'bottom',
+                        },
                       },
-                    },
-                    cutout: '70%',
-                  }}
-                />
+                      animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 1500,
+                      },
+                    }}
+                  />
+                </motion.div>
               </Box>
             </Card>
           </Grid>
