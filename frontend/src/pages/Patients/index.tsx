@@ -108,6 +108,21 @@ export default function Patients() {
   const [openDialog, setOpenDialog] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
 
+  // Add form state
+  const [formData, setFormData] = useState({
+    name: '',
+    age: '',
+    gender: '',
+    bloodType: '',
+    condition: '',
+    severity: 'Stable' as Patient['severity'],
+    admissionDate: new Date().toISOString().split('T')[0],
+    assignedDoctor: '',
+    assignedHospital: '',
+    roomNumber: '',
+    status: 'Admitted' as Patient['status'],
+  });
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   };
@@ -124,13 +139,97 @@ export default function Patients() {
     setOpenDialog(true);
   };
 
+  // Add form change handler
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name as string]: value
+    });
+  };
+
+  // Update handleEditPatient to populate form data
   const handleEditPatient = (patient: Patient) => {
     setSelectedPatient(patient);
+    setFormData({
+      name: patient.name,
+      age: patient.age.toString(),
+      gender: patient.gender,
+      bloodType: patient.bloodType,
+      condition: patient.condition,
+      severity: patient.severity,
+      admissionDate: patient.admissionDate,
+      assignedDoctor: patient.assignedDoctor,
+      assignedHospital: patient.assignedHospital,
+      roomNumber: patient.roomNumber,
+      status: patient.status,
+    });
     setOpenDialog(true);
   };
 
+  // Update handleSavePatient to properly save data
   const handleSavePatient = () => {
-    // Implementation for saving patient data
+    if (selectedPatient) {
+      // Update existing patient
+      setPatients(prev => 
+        prev.map(patient => 
+          patient.id === selectedPatient.id
+            ? {
+                ...patient,
+                name: formData.name,
+                age: parseInt(formData.age),
+                gender: formData.gender,
+                bloodType: formData.bloodType,
+                condition: formData.condition,
+                severity: formData.severity,
+                admissionDate: formData.admissionDate,
+                assignedDoctor: formData.assignedDoctor,
+                assignedHospital: formData.assignedHospital,
+                roomNumber: formData.roomNumber,
+                status: formData.status,
+                lastUpdate: 'Just now'
+              }
+            : patient
+        )
+      );
+    } else {
+      // Add new patient
+      const newPatient: Patient = {
+        id: patients.length + 1,
+        name: formData.name,
+        age: parseInt(formData.age),
+        gender: formData.gender,
+        bloodType: formData.bloodType,
+        condition: formData.condition,
+        severity: formData.severity,
+        admissionDate: formData.admissionDate,
+        assignedDoctor: formData.assignedDoctor,
+        assignedHospital: formData.assignedHospital,
+        roomNumber: formData.roomNumber,
+        status: formData.status,
+        medicalHistory: [],
+        currentMedications: [],
+        allergies: [],
+        lastUpdate: 'Just now'
+      };
+      setPatients(prev => [...prev, newPatient]);
+    }
+    
+    // Reset form and close dialog
+    setFormData({
+      name: '',
+      age: '',
+      gender: '',
+      bloodType: '',
+      condition: '',
+      severity: 'Stable',
+      admissionDate: new Date().toISOString().split('T')[0],
+      assignedDoctor: '',
+      assignedHospital: '',
+      roomNumber: '',
+      status: 'Admitted',
+    });
+    setSelectedPatient(null);
     setOpenDialog(false);
   };
 
@@ -225,7 +324,7 @@ export default function Patients() {
                   sx={{ mb: 2 }}
                 />
 
-                <List dense>
+                <List sx={{ p: 0 }}>
                   <ListItem>
                     <ListItemAvatar>
                       <Avatar sx={{ bgcolor: 'background.paper' }}>
@@ -290,11 +389,157 @@ export default function Patients() {
           {selectedPatient ? 'Edit Patient' : 'Add New Patient'}
         </DialogTitle>
         <DialogContent>
-          {/* Add form fields for patient data */}
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Full Name"
+                name="name"
+                value={formData.name}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Age"
+                name="age"
+                type="number"
+                value={formData.age}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth required>
+                <InputLabel>Gender</InputLabel>
+                <Select
+                  name="gender"
+                  value={formData.gender}
+                  label="Gender"
+                  onChange={handleFormChange}
+                >
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth required>
+                <InputLabel>Blood Type</InputLabel>
+                <Select
+                  name="bloodType"
+                  value={formData.bloodType}
+                  label="Blood Type"
+                  onChange={handleFormChange}
+                >
+                  <MenuItem value="A+">A+</MenuItem>
+                  <MenuItem value="A-">A-</MenuItem>
+                  <MenuItem value="B+">B+</MenuItem>
+                  <MenuItem value="B-">B-</MenuItem>
+                  <MenuItem value="AB+">AB+</MenuItem>
+                  <MenuItem value="AB-">AB-</MenuItem>
+                  <MenuItem value="O+">O+</MenuItem>
+                  <MenuItem value="O-">O-</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Medical Condition"
+                name="condition"
+                value={formData.condition}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth required>
+                <InputLabel>Severity</InputLabel>
+                <Select
+                  name="severity"
+                  value={formData.severity}
+                  label="Severity"
+                  onChange={handleFormChange}
+                >
+                  <MenuItem value="Critical">Critical</MenuItem>
+                  <MenuItem value="Moderate">Moderate</MenuItem>
+                  <MenuItem value="Stable">Stable</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Assigned Doctor"
+                name="assignedDoctor"
+                value={formData.assignedDoctor}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Assigned Hospital"
+                name="assignedHospital"
+                value={formData.assignedHospital}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Room Number"
+                name="roomNumber"
+                value={formData.roomNumber}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth required>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  name="status"
+                  value={formData.status}
+                  label="Status"
+                  onChange={handleFormChange}
+                >
+                  <MenuItem value="Admitted">Admitted</MenuItem>
+                  <MenuItem value="In Treatment">In Treatment</MenuItem>
+                  <MenuItem value="Discharged">Discharged</MenuItem>
+                  <MenuItem value="Transfer">Transfer</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                type="date"
+                label="Admission Date"
+                name="admissionDate"
+                value={formData.admissionDate}
+                onChange={handleFormChange}
+                InputLabelProps={{ shrink: true }}
+                required
+              />
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button onClick={handleSavePatient} variant="contained">Save</Button>
+          <Button 
+            onClick={handleSavePatient} 
+            variant="contained"
+            disabled={!formData.name || !formData.age || !formData.gender || !formData.bloodType || !formData.condition}
+          >
+            {selectedPatient ? 'Update Patient' : 'Add Patient'}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

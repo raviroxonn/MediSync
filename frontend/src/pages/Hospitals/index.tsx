@@ -336,6 +336,19 @@ const Hospitals = () => {
   const [statsDialogOpen, setStatsDialogOpen] = useState(false);
   const [selectedStats, setSelectedStats] = useState<HospitalStats | null>(null);
   const [tabValue, setTabValue] = useState(0);
+  const [formData, setFormData] = useState({
+    name: '',
+    location: '',
+    phone: '',
+    email: '',
+    totalBeds: 0,
+    availableBeds: 0,
+    specialties: [],
+    emergencyCapacity: false,
+  });
+  const [specialtyList, setSpecialtyList] = useState(specialtyOptions);
+  const [showCustomField, setShowCustomField] = useState<string | null>(null);
+  const [customValue, setCustomValue] = useState('');
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -385,6 +398,16 @@ const Hospitals = () => {
 
   const handleEditHospital = (hospital: Hospital) => {
     setSelectedHospital(hospital);
+    setFormData({
+      name: hospital.name,
+      location: hospital.location,
+      phone: hospital.phone,
+      email: hospital.email,
+      totalBeds: hospital.totalBeds,
+      availableBeds: hospital.availableBeds,
+      specialties: hospital.specialties,
+      emergencyCapacity: hospital.emergencyCapacity,
+    });
     setDialogOpen(true);
   };
 
@@ -419,6 +442,146 @@ const Hospitals = () => {
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+  };
+
+  const handleFormChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = () => {
+    if (selectedHospital) {
+      // Edit existing hospital
+      setHospitals(prev => prev.map(hospital => 
+        hospital.id === selectedHospital.id 
+          ? {
+              ...hospital,
+              name: formData.name,
+              location: formData.location,
+              phone: formData.phone,
+              email: formData.email,
+              totalBeds: Number(formData.totalBeds),
+              availableBeds: Number(formData.availableBeds),
+              occupancyRate: Math.round(((Number(formData.totalBeds) - Number(formData.availableBeds)) / Number(formData.totalBeds)) * 100),
+              emergencyCapacity: formData.emergencyCapacity,
+              specialties: formData.specialties,
+              lastUpdated: 'Just now',
+            }
+          : hospital
+      ));
+    } else {
+      // Add new hospital
+      const newHospital: Hospital = {
+        id: String(hospitals.length + 1),
+        name: formData.name,
+        location: formData.location,
+        phone: formData.phone,
+        email: formData.email,
+        totalBeds: Number(formData.totalBeds),
+        availableBeds: Number(formData.availableBeds),
+        occupancyRate: Math.round(((Number(formData.totalBeds) - Number(formData.availableBeds)) / Number(formData.totalBeds)) * 100),
+        emergencyCapacity: formData.emergencyCapacity,
+        specialties: formData.specialties,
+        staffCount: 0,
+        status: 'active',
+        lastUpdated: 'Just now',
+        coordinates: [40.7128, -74.0060], // Default to NYC coordinates
+        stats: {
+          totalPatients: 0,
+          avgWaitTime: 0,
+          emergencyResponses: 0,
+          occupancyTrend: [0]
+        },
+        departments: [
+          {
+            name: 'Emergency',
+            beds: { total: Math.floor(Number(formData.totalBeds) * 0.2), available: Math.floor(Number(formData.availableBeds) * 0.2) },
+            status: 'stable',
+          }
+        ],
+      };
+
+      setHospitals(prev => [...prev, newHospital]);
+    }
+    
+    setDialogOpen(false);
+    setFormData({
+      name: '',
+      location: '',
+      phone: '',
+      email: '',
+      totalBeds: 0,
+      availableBeds: 0,
+      specialties: [],
+      emergencyCapacity: false,
+    });
+    setSelectedHospital(null);
+  };
+
+  const handleCustomOption = (field: string, value: string) => {
+    console.log(`Custom option field: ${field}, value: ${value}`);
+    
+    if (value === 'Add New...') {
+      // When "Add New..." is selected, show the custom field input
+      setShowCustomField(field);
+      setCustomValue('');
+    } else {
+      // When a regular value is selected, update the form
+      if (field === 'specialty') {
+        // Handle specialty selection
+        const updatedSpecialties = formData.specialties.includes(value)
+          ? formData.specialties.filter(s => s !== value)
+          : [...formData.specialties, value];
+        
+        setFormData({
+          ...formData,
+          specialties: updatedSpecialties
+        });
+      } else {
+        // Handle other fields
+        setFormData({
+          ...formData,
+          [field]: value
+        });
+      }
+    }
+  };
+  
+  const addCustomValue = () => {
+    if (showCustomField && customValue.trim()) {
+      console.log(`Adding custom ${showCustomField}: "${customValue.trim()}"`);
+      
+      if (showCustomField === 'specialty') {
+        // Add new specialty
+        const newSpecialty = customValue.trim();
+        
+        // Add to specialty list if it doesn't exist
+        if (!specialtyList.includes(newSpecialty)) {
+          setSpecialtyList(prev => [...prev, newSpecialty]);
+        }
+        
+        // Add to selected specialties
+        if (!formData.specialties.includes(newSpecialty)) {
+          setFormData({
+            ...formData,
+            specialties: [...formData.specialties, newSpecialty]
+          });
+        }
+      } else {
+        // Update other form fields
+        setFormData({
+          ...formData,
+          [showCustomField]: customValue.trim()
+        });
+      }
+      
+      // Reset
+      setShowCustomField(null);
+      setCustomValue('');
+    }
   };
 
   return (
@@ -809,7 +972,11 @@ const Hospitals = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button variant="contained" onClick={handleCloseDialog}>
+          <Button 
+            variant="contained" 
+            onClick={handleSubmit}
+            disabled={!formData.name || !formData.location || !formData.phone || !formData.email}
+          >
             {selectedHospital ? 'Save Changes' : 'Add Hospital'}
           </Button>
         </DialogActions>

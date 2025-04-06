@@ -2,6 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
+// Polyfill for React Router's v7_startTransition
+// This helps silence the warning about future transition behavior
+if (!React.startTransition) {
+  React.startTransition = (callback) => {
+    callback();
+  };
+}
+
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );

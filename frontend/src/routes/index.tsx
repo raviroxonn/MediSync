@@ -9,6 +9,7 @@ const Hospitals = lazy(() => import('../pages/Hospitals'));
 const Emergencies = lazy(() => import('../pages/Emergencies'));
 const Staff = lazy(() => import('../pages/Staff'));
 const Settings = lazy(() => import('../pages/Settings'));
+const Patients = lazy(() => import('../pages/Patients'));
 
 const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<LoadingIndicator />}>
@@ -33,6 +34,10 @@ export const routes: RouteObject[] = [
       {
         path: 'emergencies',
         element: <SuspenseWrapper><Emergencies /></SuspenseWrapper>,
+      },
+      {
+        path: 'patients',
+        element: <SuspenseWrapper><Patients /></SuspenseWrapper>,
       },
       {
         path: 'staff',
