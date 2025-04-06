@@ -35,6 +35,9 @@ const ThemeContext = createContext<ThemeContextType>({
 
 export const useThemeContext = () => useContext(ThemeContext);
 
+// Alias for backward compatibility
+export const useTheme = useThemeContext;
+
 interface ThemeProviderProps {
   children: ReactNode;
 }
